@@ -1,37 +1,38 @@
 #!/bin/bash
-# file: update-path.sh
+# file = tool/update-path.sh
+source ~/software/scripts/tool/exit-codes.sh
 
-# Color variables
-declare -r GREEN="\033[32m"
-declare -r YELLOW="\033[33m"
-declare -r RED="\033[31m"
-declare -r RESET="\033[0m"
+# colors
+readonly GREEN="\033[32m"
+readonly YELLOW="\033[33m"
+readonly RED="\033[31m"
+readonly RESET="\033[0m"
 
-# Function to check if the given binary path is correct
+# check if the given binary path is correct
 function is_binary_path_ok() {
     local binary_path="${1}"
 
     # Isn't binary_path a directory?
-    if [ ! -d "${binary_path}" ]; then
-        echo -e "${RED}Error: ${binary_path} is not a directory.${RESET}"
-        return 1
+    if [[ ! -d "${binary_path}" ]]; then
+        echo -e "${RED}ERROR: ${binary_path} is not a directory${RESET}"
+        return "$NO"
     fi
 
     # Isn't binary_path an executable directory?
-    if [ ! -x "${binary_path}" ]; then
-        echo -e "${RED}Error: ${binary_path} is not executable.${RESET}"
-        return 1
+    if [[ ! -x "${binary_path}" ]]; then
+        echo -e "${RED}ERROR: ${binary_path} is not executable${RESET}"
+        return "$NO"
     fi
 
-    # success
-    return 0
+    return "$YES"
 }
 
-# Function to remove duplicate occurrences of a given path from $PATH
-function remove_duplicates() {
+# remove duplicate occurrences of a given path in $PATH
+# old nale = remove_duplicates
+function remove_duplicates_in_PATH() {
     local path_to_remove="${1}"
 
-    if [ -z "${path_to_remove}" ]; then
+    if [[ -z "${path_to_remove}" ]]; then
         echo "${PATH}"
         return
     fi
@@ -57,7 +58,7 @@ function remove_duplicates() {
     echo "${new_path}"
 }
 
-# Function to update the .bashrc file with the new $PATH
+# update the .bashrc file with the new $PATH
 function update_bashrc() {
     local new_path="${1}"
 

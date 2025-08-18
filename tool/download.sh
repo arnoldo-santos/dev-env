@@ -1,5 +1,6 @@
 #!/bin/bash
-# file: download.sh
+# file = tool/download.sh
+source ~/software/scripts/tool/exit-codes.sh
 
 # Goal: download a file using the curl command
 # Parameters {
@@ -45,9 +46,9 @@ function manage_download() {
 
     download_file "${download_dst}" "${download_url}" || {
         echo "ERROR: download failed" >&2
-        return 1 # failure
+        return "$ERROR"
     }
 
     echo "OK: download successfully!"
-    return 0 # success
+    return "$OK"
 }

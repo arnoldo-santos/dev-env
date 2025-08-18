@@ -1,9 +1,10 @@
 #!/bin/bash
 # file = tool/symlink.sh
+source ~/software/scripts/tool/exit-codes.sh
 
-function reload_shell_config() {
-    . ~/.zshrc
-    . ~/.zshenv
+# old name = reload_shell_config
+function restart_shell() {
+    exec zsh -l
 }
 
 # Goal {
@@ -59,8 +60,8 @@ function make_symlink() {
 
     # check if the symlink already exists and is correct
     if is_a_symlink "${symlink}" && symlink_is_ok "${source}" "${symlink}"; then
-        echo "OK: symlink '${symlink}' already exists and it is correctly pointing to '${source}'"
-        return 0 # ok
+        echo "OK: symlink '${symlink}' is fine!"
+        return "$OK"
     fi
 
     # build the command
@@ -69,17 +70,17 @@ function make_symlink() {
     if [ "${use_sudo}" = true ]; then
         cmd="sudo ${cmd}"
     elif [ "${use_sudo}" != false ]; then
-        echo "ERROR: invalid value for parameter 'use_sudo' in function 'make_symlink' (it must be 'true' or 'false')" >&2
-        return 1 # fuck
+        echo "ERROR: invalid value for parameter 'use_sudo' in function 'tool/symlink.make_symlink()' (it must be 'true' or 'false')" >&2
+        return "$ERROR"
     fi
 
     # execute the command
     eval "${cmd}" && {
-        echo "OK: symlink made successfully!"
-        return 0 # ok
+        echo "OK: symlink made successfully: '${symlink}'"
+        return "$OK"
     }
 
-    # Handle failure
-    echo "ERROR: symlink creation failed" >&2
-    return 1 # fuck
+    # handle failure
+    echo "ERROR: symlink creation failed: '${symlink}'" >&2
+    return "$ERROR"
 }

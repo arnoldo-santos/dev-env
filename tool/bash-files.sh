@@ -1,10 +1,11 @@
 #!/bin/bash
 # file = tool/bash-files.sh
+source ~/software/scripts/tool/exit-codes.sh
 
-readonly YES=0
-readonly NO=1
-readonly OK=0
-readonly ERROR=1
+function is_file_name_ok() {
+    local file_name="$1"
+    [[ "${file_name}" =~ ^[-[:alnum:]\._]+$ ]]
+}
 
 # Usage {
 #	file_exists <file>
@@ -58,8 +59,7 @@ function file_has_sh_extension() {
 function file_has_a_bash_shebang() {
     local file="$1"
 
-    grep -q "^#!/bin/bash\|#!/usr/bin/env bash" "${file}" && return "${YES}"
-    return "${NO}"
+    grep -q "^#!/bin/bash\|#!/usr/bin/env bash" "${file}"
 }
 
 # Usage {
@@ -111,9 +111,7 @@ function file_is_a_bash_script() {
 # }
 function script_array_is_empty() {
     local scripts=("$@")
-
-    ((${#scripts[@]} == 0)) && return "${YES}"
-    return "${NO}"
+    ((${#scripts[@]} == 0))
 }
 
 # Usage {
@@ -178,11 +176,11 @@ function make_script_executable() {
 
     chmod +x "${script}" && {
         echo "OK: the script '${script}' was made executable successfully"
-        return "${YES}"
+        return "${OK}"
     }
 
     echo "ERROR: failed to make script '${script}' executable" >&2
-    return "${NO}"
+    return "${ERROR}"
 }
 
 # Usage {
@@ -240,7 +238,7 @@ function run_scripts() {
         echo "Running '${script}'..."
 
         if run_script "${script}"; then
-            echo "OK: '${script}' executed successfully"
+            echo "OK: '${script}' executed successfully!"
             echo
         else
             echo "ERROR: script execution failed at '${script}'" >&2

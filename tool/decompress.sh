@@ -1,5 +1,6 @@
 #!/bin/bash
-# file: decompress.sh
+# file = tool/decompress.sh
+source ~/software/scripts/tool/exit-codes.sh
 
 # Goal: decompress a zip file from 'source' to 'destination'
 # Parameters {
@@ -22,10 +23,9 @@ function decompress_zip_file() {
         unzip -q "${src}" -d "${tmp_dir}" &&
         mv "${tmp_dir}"/*/* "${dst}" &&
         rm -r "${tmp_dir}" &&
-        return 0 # success
+        return "$OK"
 
-    # else
-    return 1 # failure
+    return "$ERROR"
 }
 
 # Goal: manage the decompression of a zip file from 'source' to 'destination'
@@ -49,9 +49,9 @@ function manage_zip_decompression() {
 
     decompress_zip_file "${zip_file_path}" "${installation_dir}" && {
         echo "OK: successful extraction!"
-        return 0 # success
+        return "$OK"
     }
 
     echo "ERROR: extraction failed" >&2
-    return 1 # failure
+    return "$ERROR"
 }

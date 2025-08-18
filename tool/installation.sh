@@ -1,5 +1,5 @@
 #!/bin/bash
-# file = installation.sh
+# file = tool/installation.sh
 
 # Usage {
 #	is_installed <binary>

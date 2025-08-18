@@ -1,19 +1,21 @@
 #!/bin/bash
-# file: binary.sh
+# file = tool/binary.sh
+source ~/software/scripts/tool/exit-codes.sh
 
 function binary_is_fine() {
     local binary_file="$1"
 
-    [ -f "${binary_file}" ] || {
+    [[ -f "${binary_file}" ]] || {
         echo "ERROR: binary does not exist" >&2
-        return 1 # failure
+        return "$NO"
     }
 
-    [ -x "${binary_file}" ] || {
+    [[ -x "${binary_file}" ]] || {
         echo "ERROR: binary not excecutable" >&2
-        return 1 # failure
+        return "$NO"
     }
-    return 0 # success
+
+    return "$YES"
 }
 
 function manage_binary_validation() {
@@ -22,9 +24,9 @@ function manage_binary_validation() {
 
     binary_is_fine "${binary_path}" && {
         printf "OK: %s\n" "$software_name binary file created successfully!"
-        return 0 # success
+        return "$OK"
     }
 
     echo "ERROR: $software_name binary file creation failed" >&2
-    return 1 # failure
+    return "$ERROR"
 }

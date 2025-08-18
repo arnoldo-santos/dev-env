@@ -1,5 +1,6 @@
 #!/bin/bash
 # file = tool/directory.sh
+source ~/software/scripts/tool/exit-codes.sh
 
 # Goal = check if a path is a directory
 # Usage = function <path>
@@ -13,9 +14,9 @@ function check_dir() {
 
 	is_dir "$dir" || {
 		echo "ERROR: $dir isn't a directory" >&2
-		return 1 # shit
+		return "$ERROR"
 	}
-	return 0 # ok
+	return "$OK"
 }
 
 # Goal = check if a directory is empty
@@ -39,12 +40,12 @@ function change_to_dir() {
 	local dir="$1"
 
 	# check if it's a directory
-	check_dir "$dir" || return 1 # shit
+	check_dir "$dir" || return "$ERROR"
 
-	cd "$dir" 2>/dev/null && return 0 # ok
+	cd "$dir" 2>/dev/null && return "$OK"
 
 	echo "ERROR: failed to change to directory '${dir}'" >&2
-	return 1 # shit
+	return "$ERROR"
 }
 
 # Goal = check if a directory is a Git repository
@@ -54,7 +55,7 @@ function dir_is_a_git_repo() {
 	# it's an empty directory
 	dir_is_empty "$dir" && {
 		echo "ERROR: $dir is an empty directory" >&2
-		return 1 # shit
+		return "$NO"
 	}
 
 	# it isn't a directory
@@ -71,9 +72,9 @@ function save_current_dir() {
 	# push current dir
 	pushd . >/dev/null || {
 		echo "ERROR: 'pushd ${current_dir}' failed" >&2
-		return 1 # shit
+		return "$ERROR"
 	}
-	return 0 # ok
+	return "$OK"
 }
 
 function restore_current_dir() {
@@ -82,9 +83,9 @@ function restore_current_dir() {
 
 	popd >/dev/null || {
 		echo "ERROR: 'popd ${current_dir}' failed" >&2
-		return 1 # shit
+		return "$ERROR"
 	}
-	return 0 # ok
+	return "$OK"
 }
 
 function change_to_repo_dir() {
@@ -92,15 +93,15 @@ function change_to_repo_dir() {
 	local current_dir
 	current_dir="$PWD"
 
-	save_current_dir || return 1 # shit
+	save_current_dir || return "$ERROR"
 
 	# change to the repo dir
 	change_to_dir "${repo_dir}" || {
 		restore_current_dir
-		return 1 # shit
+		return "$ERROR"
 	}
 
-	return 0 # ok
+	return "$OK"
 }
 
 # Goal: Check if the given directory is dangerous to delete (like / or $HOME)
@@ -114,26 +115,26 @@ function is_dangerous_dir() {
 	resolved="$(readlink -f "$path" 2>/dev/null)"
 
 	# Block if empty or not resolvable
-	[[ -z "$resolved" ]] && return 0
+	[[ -z "$resolved" ]] && return "$YES"
 
 	# Block if it's root or home
-	[[ "$resolved" == "/" ]] && return 0
-	[[ "$resolved" == "$HOME" ]] && return 0
-	[[ "$resolved" == "$HOME/" ]] && return 0
+	[[ "$resolved" == "/" ]] && return "$YES"
+	[[ "$resolved" == "$HOME" ]] && return "$YES"
+	[[ "$resolved" == "$HOME/" ]] && return "$YES"
 
 	# Block if it's one of the system-critical dirs
 	case "$resolved" in
 	/home | /root | /etc | /usr | /bin | /sbin | /lib | /lib64 | /boot | /opt | /srv | /var | /dev | /proc | /sys | /run)
-		return 0
+		return "$YES"
 		;;
 	esac
 
 	# Enforce minimum path depth (e.g., /foo = unsafe, /foo/bar = safe)
 	local depth
 	depth=$(awk -F'/' '{print NF-1}' <<<"$resolved")
-	((depth < 2)) && return 0
+	((depth < 2)) && return "$YES"
 
-	return 1 # safe
+	return "$NO"
 }
 
 function recreate_repo_dir() {
@@ -145,19 +146,19 @@ function recreate_repo_dir() {
 
 	if is_dangerous_dir "$installation_dir"; then
 		echo "ERROR: refusing to delete dangerous directory '$installation_dir'" >&2
-		return 1
+		return "$ERROR"
 	fi
 
 	rm -rf "${installation_dir}" || {
 		echo "ERROR: failed to remove directory '${installation_dir}'" >&2
-		return 1 # failure
+		return "$ERROR"
 	}
 
 	mkdir -p "${installation_dir}" || {
 		echo "ERROR: failed to create directory '$installation_dir'" >&2
-		return 1 # shit
+		return "$ERROR"
 	}
 
 	echo "done!"
-	return 0 # ok
+	return "$OK"
 }
