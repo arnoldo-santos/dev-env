@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/bash-files.sh
-source ~/software/scripts/tool/exit-codes.sh
+source ~/software/scripts/exit-codes.sh
 
 function is_file_name_ok() {
     local file_name="$1"

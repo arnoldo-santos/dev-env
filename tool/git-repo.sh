@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/git-repo.sh
-source ~/software/scripts/tool/exit-codes.sh
+source ~/software/scripts/exit-codes.sh
 source ~/software/scripts/tool/directory.sh
 
 function is_valid_git_url() {

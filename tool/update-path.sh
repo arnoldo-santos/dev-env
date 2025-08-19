@@ -1,6 +1,7 @@
 #!/bin/bash
 # file = tool/update-path.sh
-source ~/software/scripts/tool/exit-codes.sh
+source ~/software/scripts/exit-codes.sh
+source ~/software/scripts/tool/symlink.sh
 
 # colors
 readonly GREEN="\033[32m"
@@ -58,81 +59,145 @@ function remove_duplicates_in_PATH() {
     echo "${new_path}"
 }
 
-# update the .bashrc file with the new $PATH
-function update_bashrc() {
+function update_PATH_in_zshrc() {
     local new_path="${1}"
 
-    if [ ! -w ~/.bashrc ]; then
-        echo "Error: ~/.bashrc file is not writable." >&2
-        return 1
+    if [[ ! -w ~/.zshrc ]]; then
+        echo "ERROR: ~/.zshrc file is not writable." >&2
+        return "$ERROR"
     fi
 
-    # Create a backup of ~/.bashrc
-    cp -p ~/.bashrc ~/.bashrc.bak || {
-        echo "Error: failed to create backup of ~/.bashrc" >&2
-        return 1
+    # create a backup of ~/.zshrc
+    cp -p ~/.zshrc ~/.zshrc.bak || {
+        echo "ERROR: failed to create backup of ~/.zshrc" >&2
+        return "$ERROR"
     }
 
-    # Update the PATH variable in ~/.bashrc
-    if grep -q "^export PATH=" ~/.bashrc; then
-        sed -i "s|^export PATH=.*|export PATH=\"${new_path}\"|" ~/.bashrc
+    # check if the comment exists
+    if grep -q "# duplicates in PATH removed" ~/.zshrc; then
+        # comment exists, update the export line that follows it
+        sed -i '/# duplicates in PATH removed/{n;s/^export PATH=.*/export PATH="'"${new_path}"'"/;}' ~/.zshrc || {
+            echo "ERROR: failed to update ~/.zshrc" >&2
+            return "$ERROR"
+        }
     else
-        printf "export PATH=\"%s\"\n" "${new_path}" >>~/.bashrc
+        # comment doesn't exist, append the entire block
+        {
+            echo ""
+            echo "# duplicates in PATH removed"
+            echo "export PATH=\"${new_path}\""
+        } >>~/.zshrc || {
+            echo "ERROR: failed to write to ~/.zshrc" >&2
+            return "$ERROR"
+        }
     fi
 
-    # Source .bashrc to apply changes to the current shell
-    source ~/.bashrc || {
-        echo "Error: failed to source ~/.bashrc" >&2
-        return 1
-    }
+    return "$OK"
 }
 
-# Check if the given binary path exists in $PATH
-function path_exists() {
+# check if the given binary path exists in $PATH
+function is_in_PATH() {
     local binary_path="${1}"
+
+    if [[ -z "$binary_path" ]]; then
+        echo "ERROR: No path provided" >&2
+        return 1
+    fi
+
     [[ ${PATH} =~ (^|:)${binary_path}(:|$) ]]
 }
 
+function has_duplicate_in_PATH() {
+    local target_path="${1}"
+
+    # Check if target_path is provided
+    if [[ -z "$target_path" ]]; then
+        echo "ERROR: No path provided" >&2
+        return 1
+    fi
+
+    # Count occurrences of the path in PATH
+    local count
+    count=$(grep -o ":${target_path}:" <<<":${PATH}:" | wc -l)
+
+    # Return 0 (true) if count > 1, otherwise return 1 (false)
+    if ((count > 1)); then
+        return "$YES" # Has duplicates
+    else
+        return "$NO" # No duplicates
+    fi
+}
+
+function prompt_add_to_PATH() {
+    local binary_path="${1}"
+
+    if [[ -z "$binary_path" ]]; then
+        echo "ERROR: No path provided" >&2
+        return 1
+    fi
+
+    read -r -p "${binary_path} is not in PATH. Do you want to add it? (yes/no): " choice
+
+    # Convert to lowercase and accept various forms
+    choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+
+    while [[ ! "$choice" =~ ^(y|yes|n|no)$ ]]; do
+        read -r -p "Invalid choice. Please enter 'yes' or 'no': " choice
+        choice=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+    done
+
+    case "${choice}" in
+    y | yes)
+        local new_path="${PATH}:${binary_path}"
+
+        if update_PATH_in_zshrc "${new_path}"; then
+            echo -e "${GREEN}OK: ${binary_path} added to PATH${RESET}"
+            return "$OK"
+        else
+            echo -e "${RED}ERROR: Failed to add ${binary_path} to PATH${RESET}"
+            return "$ERROR"
+        fi
+        ;;
+    n | no)
+        echo -e "${YELLOW}No changes made to PATH${RESET}"
+        return "$OK"
+        ;;
+    esac
+}
+
 # Goal { update the $PATH with the given binary_path }
-function update_path() {
-    # Check if argument is provided
+function update_PATH() {
+    # check if argument is provided
     if (($# != 1)); then
         echo "Usage: $0 <binary_path>"
         echo "Error: missing binary_path"
         echo "Warning: you must give a binary_path"
-        return 1
+        return "$ERROR"
     fi
 
     local binary_path="${1}"
+    is_binary_path_ok "${binary_path}" || return "$ERROR"
 
-    if ! is_binary_path_ok "${binary_path}"; then
-        exit 1
-    fi
+    if is_in_PATH "${binary_path}"; then
 
-    if path_exists "${binary_path}"; then
+        # if (($(grep -o ":${binary_path}:" <<<":${PATH}:" | wc -l) > 1)); then
+        if has_duplicate_in_PATH "${binary_path}"; then
+            new_path=$(remove_duplicates_in_PATH "${binary_path}")
 
-        if (($(grep -o ":${binary_path}:" <<<":${PATH}:" | wc -l) > 1)); then
-            new_path=$(remove_duplicates "${binary_path}")
-            update_bashrc "${new_path}" && echo -e "${GREEN}Duplicate occurrences of ${binary_path} removed from PATH.${RESET}"
+            if update_PATH_in_zshrc "${new_path}"; then
+                echo -e "${GREEN}Duplicate occurrences of ${binary_path} removed from PATH.${RESET}"
+                return "$OK"
+            else
+                echo -e "${RED}ERROR: Failed to add ${new_path} to PATH${RESET}"
+                return "$ERROR"
+            fi
 
         else
             echo -e "${GREEN}${binary_path} is already in PATH without duplicates.${RESET}"
+            return "$OK"
         fi
 
     else
-        read -r -p "${binary_path} is not in PATH. Do you want to add it? (yes/no): " choice
-        while [[ "${choice}" != "yes" && "${choice}" != "no" ]]; do
-            read -r -p "Invalid choice. Please enter 'yes' or 'no': " choice
-        done
-
-        case "${choice}" in
-        yes)
-            new_path="${PATH}:${binary_path}"
-            update_bashrc "${new_path}" && echo -e "${GREEN}${binary_path} added to PATH.${RESET}"
-            ;;
-        no)
-            echo -e "${YELLOW}No changes made to PATH.${RESET}"
-            ;;
-        esac
+        prompt_add_to_PATH "$binary_path"
     fi
 }

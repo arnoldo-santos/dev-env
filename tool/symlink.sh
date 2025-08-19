@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/symlink.sh
-source ~/software/scripts/tool/exit-codes.sh
+source ~/software/scripts/exit-codes.sh
 
 # old name = reload_shell_config
 function restart_shell() {

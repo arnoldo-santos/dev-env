@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/binary.sh
-source ~/software/scripts/tool/exit-codes.sh
+source ~/software/scripts/exit-codes.sh
 
 function binary_is_fine() {
     local binary_file="$1"
