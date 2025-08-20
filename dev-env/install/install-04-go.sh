@@ -1,21 +1,36 @@
 #!/bin/bash
-# file = golang.sh
+# file = install-04-go.sh
 
-source ~/software/dev/dev-env/tool/version.sh
-source ~/software/dev/dev-env/tool/symlink.sh
-source ~/software/dev/dev-env/tool/installation.sh
-source ~/software/dev/dev-env/tool/git-repo.sh
+source ~/software/scripts-dev/dev-env/tool/version.sh
+source ~/software/scripts-dev/dev-env/tool/symlink.sh
+source ~/software/scripts-dev/dev-env/tool/installation.sh
+source ~/software/scripts-dev/dev-env/tool/git-repo.sh
+source ~/software/scripts-dev/std-tool.sh
+
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 
-# Go's data
+function get_latest_stable_go_release() {
+    local version
+
+    version=$(curl -s "https://go.dev/dl/?mode=json" |
+        jq -r '
+            [.[] | select(.stable == true)][0].version
+        ')
+
+    if [[ -z "$version" ]]; then
+        return "$ERROR"
+    fi
+
+    echo "${version#go}"
+    return "$OK"
+}
+
 declare -A SOFTWARE=(
     [name]=Go
     [binary]=go
-    [version_to_install]="1.24.2"
     [parent_dir]="${HOME}/software/pre-built-bin"
     [download_dir]="${HOME}/Downloads"
-    [success]=0
-    [failure]=1
+    [version_to_install]=$(get_latest_stable_go_release)
 )
 
 SOFTWARE[file_name]="go${SOFTWARE[version_to_install]}.linux-amd64.tar.gz"
@@ -27,40 +42,21 @@ SOFTWARE[symlink]="${HOME}/.local/bin/${SOFTWARE[binary]}"
 
 # operations' data
 declare -A OPERATION=(
-    [success]=0
-    [failure]=1
+    [nothing_to_do]=1
     [install]=2
     [upgrade]=3
-    [uninstall]=4
-    [nothing_to_do]=5
 )
 
-function get_latest_go_version() {
-    local version
-
-    version=$(curl -s "https://go.dev/dl/?mode=json" |
-        jq -r '
-            [.[] | select(.stable == true)][0].version
-        ')
-
-    if [[ -z "$version" ]]; then
-        return 1
-    fi
-
-    echo "${version#go}"
-    return 0
-}
-
-report_operation_to_do() {
+function report_operation_to_do() {
     # Go is installed
-    if installed "${SOFTWARE[binary]}"; then
+    if is_installed "${SOFTWARE[binary]}"; then
 
-        local installed_version
-        installed_version=$(go version | awk '{print $3}' | sed 's/go//')
-        echo "${SOFTWARE[name]} version ${installed_version} is already installed"
+        local go_installed_version
+        go_installed_version=$(go version | awk '{print $3}' | sed 's/go//')
+        echo "${SOFTWARE[name]} version ${go_installed_version} is already installed"
 
         # Go needs upgrade
-        if version_is_greater "${SOFTWARE[version_to_install]}" "${installed_version}"; then
+        if version_is_greater "${SOFTWARE[version_to_install]}" "${go_installed_version}"; then
             echo "A newer version (${SOFTWARE[version_to_install]}) is available. Proceeding with upgrade..."
             return "${OPERATION[upgrade]}"
         fi
@@ -76,23 +72,23 @@ report_operation_to_do() {
 }
 
 # Download Go
-download() {
+function download_go() {
     echo "Downloading ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]}..."
     mkdir -p "${SOFTWARE[download_dir]}"
 
     # download failed
     if ! curl -Lo "${SOFTWARE[installation_file]}" "${SOFTWARE[download_url]}"; then
         echo "ERROR: failed to download ${SOFTWARE[name]}. Please check your internet connection and the version number" >&2
-        return "${OPERATION[failure]}"
+        return "$ERROR"
     fi
 
     # download success
     echo "OK: download successful!"
-    return "${OPERATION[success]}"
+    return "$OK"
 }
 
 # Install Go
-install() {
+function install_go() {
     echo "Installing ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]}..."
 
     mkdir -p "${SOFTWARE[parent_dir]}"
@@ -100,20 +96,20 @@ install() {
     # installation failed
     if ! tar -C "${SOFTWARE[parent_dir]}" -xzf "${SOFTWARE[installation_file]}"; then
         echo "ERROR: failed to install ${SOFTWARE[name]}. Please check your permissions and disk space" >&2
-        return "${OPERATION[failure]}"
+        return "$ERROR"
     fi
 
     # installation successful
     echo "OK: ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]} installed successfully!"
-    return "${OPERATION[success]}"
+    return "$OK"
 }
 
 # Remove any previous Go installation
-uninstall() {
+function uninstall_go() {
     echo "Checking for existing ${SOFTWARE[name]} installation..."
 
     # installation directory exists
-    if [ -d "${SOFTWARE[installation_dir]}" ]; then
+    if [[ -d "${SOFTWARE[installation_dir]}" ]]; then
 
         echo "Uninstalling previous ${SOFTWARE[name]} installation in ${SOFTWARE[installation_dir]}..."
 
@@ -121,32 +117,32 @@ uninstall() {
         if ! rm -rf "${SOFTWARE[installation_dir]}"; then
 
             echo "ERROR: failed to remove existing ${SOFTWARE[name]} installation. Please check your permissions" >&2
-            return "${OPERATION[failure]}"
+            return "$ERROR"
         fi
 
         # installation directory removed successfully
         echo "OK: ${SOFTWARE[name]} uninstallation successful!"
-        return "${OPERATION[success]}"
+        return "$OK"
     fi
 
     # installation directory does not exist
     echo "WARNING: can't find a ${SOFTWARE[name]} installation directory" >&2
     echo "ERROR: ${SOFTWARE[name]} uninstallation failed" >&2
-    return "${OPERATION[failure]}"
+    return "$ERROR"
 }
 
-clean_up() {
+function clean_up() {
     echo "Cleaning up ${SOFTWARE[name]} installation file ${SOFTWARE[installation_file]}..."
 
     # clean up successful
     rm -f "${SOFTWARE[installation_file]}" && {
         echo "OK: ${SOFTWARE[name]} installation file cleaned up successfully!"
-        return "${OPERATION[success]}"
+        return "$OK"
     }
 
     # clean up failed
     echo "ERROR: ${SOFTWARE[name]} installation file clean up failed"
-    return "${OPERATION[failure]}"
+    return "$ERROR"
 }
 
 # Goal {
@@ -166,11 +162,11 @@ manage_program() {
     local success=0
     local failure=1
 
-    download || return "${failure}"
+    download_go || return "${failure}"
 
-    install || return "${failure}"
+    install_go || return "${failure}"
 
-    manage_symlink "${action}" "${SOFTWARE[binary_file]}" "${SOFTWARE[symlink]}" || return "${failure}"
+    make_symlink "${action}" "${SOFTWARE[binary_file]}" "${SOFTWARE[symlink]}" || return "${failure}"
 
     clean_up || return "${failure}"
 
@@ -232,7 +228,7 @@ run() {
     if [ "${outcome}" -eq "${OPERATION[upgrade]}" ]; then
         action="upgrade"
 
-        uninstall || return "${SOFTWARE[failure]}"
+        uninstall_go || return "${SOFTWARE[failure]}"
 
         manage_program "${action}" || return "${SOFTWARE[failure]}"
 

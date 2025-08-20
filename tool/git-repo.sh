@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/git-repo.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/directory.sh
 
 function is_valid_git_url() {
@@ -107,7 +107,7 @@ function get_latest_lts_github_release() {
             select(test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) |
             sub("^v"; "")
         ' |
-        sort -V |
+        sort -v |
         tail -n1
 }
 

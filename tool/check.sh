@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/check.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
 function is_parameter_missing() {
 	local parameter="$1"

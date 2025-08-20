@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/update-path.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/symlink.sh
 
 # colors

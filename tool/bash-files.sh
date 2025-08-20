@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/bash-files.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
 function is_file_name_ok() {
     local file_name="$1"

@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/symlink.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
 # Goal {
 #   Check if a path exists

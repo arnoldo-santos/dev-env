@@ -4,7 +4,7 @@
 # set strict mode
 set -euo pipefail
 # import
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
 function make_dev_env() {
     local dir="scripts-dev"

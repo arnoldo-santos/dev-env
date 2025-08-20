@@ -6,9 +6,9 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # imports
 source ~/software/scripts-dev/tool/installation.sh
 source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
-declare -A PROGRAM=(
+declare -A SOFTWARE=(
     [id]=nvm
     [name]="Node Version Manager"
     [version]=$(get_latest_lts_github_release "nvm-sh/nvm")
@@ -16,9 +16,9 @@ declare -A PROGRAM=(
 )
 
 function install_program() {
-    local prog_id="${PROGRAM[id]}"
-    local prog_name="${PROGRAM[name]}"
-    local prog_version="v${PROGRAM[version]}"
+    local prog_id="${SOFTWARE[id]}"
+    local prog_name="${SOFTWARE[name]}"
+    local prog_version="v${SOFTWARE[version]}"
 
     is_installed "${prog_id}" && {
         echo "${prog_name} is already installed!"

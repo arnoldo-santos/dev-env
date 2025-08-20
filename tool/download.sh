@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/download.sh
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 
 # Goal: download a file using the curl command
 # Parameters {

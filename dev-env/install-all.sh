@@ -4,7 +4,7 @@
 # Set strict mode
 set -euo pipefail
 # import
-source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/bash-files.sh
 
 function install_all() {
