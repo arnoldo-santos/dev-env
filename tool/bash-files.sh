@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/bash-files.sh
-source ~/software/scripts/exit-codes.sh
+source ~/software/scripts-dev/exit-codes.sh
 
 function is_file_name_ok() {
     local file_name="$1"
@@ -199,12 +199,18 @@ function make_script_executable() {
 function run_script() {
     local script="${1}"
 
-    ! script_is_executable "${script}" && {
-        make_script_executable "${script}" || return "${ERROR}"
+    script_is_executable "${script}" || {
+        echo "WARNING: $script hasn't execution permission!"
+        return "$SKIP"
     }
-    echo
-    # run the script
     bash "${script}"
+
+    # ! script_is_executable "${script}" && {
+    #     make_script_executable "${script}" || return "${ERROR}"
+    # }
+    # echo
+    # # run the script
+    # bash "${script}"
 }
 
 # Usage {
@@ -240,10 +246,10 @@ function run_scripts() {
         if run_script "${script}"; then
             echo "OK: '${script}' executed successfully!"
             echo
-        else
-            echo "ERROR: script execution failed at '${script}'" >&2
-            echo
-            return "${ERROR}"
+        # else
+        #     echo "ERROR: script execution failed at '${script}'" >&2
+        #     echo
+        #     return "${ERROR}"
         fi
     done
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/directory.sh
-source ~/software/scripts/exit-codes.sh
+source ~/software/scripts-dev/exit-codes.sh
 
 # Goal = check if a path is a directory
 # Usage = function <path>

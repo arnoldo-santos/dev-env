@@ -1,7 +1,7 @@
 #!/bin/bash
 # file = tool/update-path.sh
-source ~/software/scripts/exit-codes.sh
-source ~/software/scripts/tool/symlink.sh
+source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/tool/symlink.sh
 
 # colors
 readonly GREEN="\033[32m"

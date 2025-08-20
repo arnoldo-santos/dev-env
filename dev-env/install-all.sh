@@ -4,12 +4,12 @@
 # Set strict mode
 set -euo pipefail
 # import
-source ~/software/scripts/exit-codes.sh
-source ~/software/scripts/tool/bash-files.sh
+source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/tool/bash-files.sh
 
 function install_all() {
     local scripts
-    scripts=("${HOME}"/software/scripts/dev-env/install/install-*.sh)
+    scripts=("${HOME}"/software/scripts-dev/dev-env/install/install-*.sh)
 
     echo "Installing software..."
 

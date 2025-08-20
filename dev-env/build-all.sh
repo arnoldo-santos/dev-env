@@ -5,12 +5,12 @@
 set -euo pipefail
 
 # import
-source ~/software/scripts/exit-codes.sh
-source ~/software/scripts/tool/bash-files.sh
+source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/tool/bash-files.sh
 
 function build_all() {
     local scripts
-    scripts=("${HOME}"/software/scripts/dev-env/build/build-*.sh)
+    scripts=("${HOME}"/software/scripts-dev/dev-env/build/build-*.sh)
 
     echo "Building software..."
 

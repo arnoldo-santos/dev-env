@@ -4,17 +4,9 @@
 # Set strict mode
 set -euo pipefail
 # import
-source ~/software/scripts/exit-codes.sh
-source ~/software/scripts/dev-env/tool/installation.sh
-source ~/software/scripts/dev-env/tool/bash-files.sh
-
-function say() {
-    echo "$@"
-}
-
-function put() {
-    echo "$@"
-}
+source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/tool/installation.sh
+source ~/software/scripts-dev/tool/bash-files.sh
 
 function add_rust_reload_code_to_zshrc() {
     # Define the lines to add
@@ -31,12 +23,12 @@ function add_rust_reload_code_to_zshrc() {
 
     # Append the lines to ~/.zshrc
     put "${rust_reload_code}" >>~/.zshrc && {
-        say "OK: Rust's reload code added to ~/.zshrc successfully"
-        return "$OK" # success
+        say "OK: Rust's reload code added to ~/.zshrc successfully!"
+        return "$OK"
     }
 
     say "ERROR: failed to add Rust's reload code to ~/.zshrc"
-    return "$ERROR" # failure
+    return "$ERROR"
 }
 
 function install_rust() {
@@ -45,19 +37,19 @@ function install_rust() {
         rustup override set stable && rustup update stable && add_rust_reload_code_to_zshrc && return "$OK" # success
 
         say "ERROR: failed to update Rust" >&2
-        return "$ERROR" # failure
+        return "$ERROR"
     else
         # install rustup
         if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh; then
             # rustup installed successfully. check Rust compiler
-            rustup override set stable && rustup update stable && add_rust_reload_code_to_zshrc && return "$OK" # success
+            rustup override set stable && rustup update stable && add_rust_reload_code_to_zshrc && return "$OK"
 
             say "ERROR: failed to update Rust" >&2
-            return "$ERROR" # failure
+            return "$ERROR"
         fi
 
         say "ERROR: Rust installation failed" >&2
-        return "$ERROR" # failure
+        return "$ERROR"
     fi
 }
 
@@ -65,22 +57,22 @@ function install_clipboard() {
     case $XDG_SESSION_TYPE in
     x11) sudo nala install xclip || {
         say "ERROR: failed to install 'xclip'" >&2
-        return "$ERROR" # failure
+        return "$ERROR"
     } ;;
     wayland) sudo nala install wl-clipboard || {
         say "ERROR: failed to install 'wl-clipboard'" >&2
-        return "$ERROR" # failure
+        return "$ERROR"
     } ;;
     *)
         say "ERROR: unknown session type: $XDG_SESSION_TYPE" >&2
         return "$ERROR"
         ;;
     esac
-    return "$OK" # success
+    return "$OK"
 }
 
-function run() {
-    echo "Installing essential software..."
+function install_programs() {
+    echo "Installing software..."
 
     if is_installed nala; then
         sudo nala update && sudo nala upgrade
@@ -102,26 +94,26 @@ function run() {
     echo "done!"
 
     say "clipboard copy..."
-    install_clipboard || return "$ERROR" # failure
+    install_clipboard || return "$ERROR"
     say "done!"
 
     say "rustup..."
-    install_rust || return "$ERROR" # failure
+    install_rust || return "$ERROR"
     say "done!"
 
     say "zip..."
-    sudo nala install zip || return "$ERROR" # failure
+    sudo nala install zip || return "$ERROR"
     say "done!"
 
     say "unzip..."
-    sudo nala install unzip || return "$ERROR" # failure
+    sudo nala install unzip || return "$ERROR"
     say "done!"
 
     say "Taplo..."
-    npm install -g @taplo/cli || return "$ERROR" # failure
+    npm install -g @taplo/cli || return "$ERROR"
     say "done!"
 
-    return "$OK" # success
+    return "$OK"
 }
 
-run
+install_programs && reload_shell_config

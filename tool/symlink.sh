@@ -1,11 +1,6 @@
 #!/bin/bash
 # file = tool/symlink.sh
-source ~/software/scripts/exit-codes.sh
-
-# old name = reload_shell_config
-function restart_shell() {
-    exec zsh -l
-}
+source ~/software/scripts-dev/exit-codes.sh
 
 # Goal {
 #   Check if a path exists

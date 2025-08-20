@@ -1,8 +1,8 @@
 #!/bin/bash
 # file = tool/dependency.sh
 set -e # Exit immediately if a command exits with a non-zero status.
-source ~/software/scripts/exit-codes.sh
-source ~/software/scripts/tool/installation.sh
+source ~/software/scripts-dev/exit-codes.sh
+source ~/software/scripts-dev/tool/installation.sh
 
 # set the default package manager
 PACKAGE_MANAGER=${PACKAGE_MANAGER:-nala}

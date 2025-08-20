@@ -1,6 +1,6 @@
 #!/bin/bash
 # file = tool/decompress.sh
-source ~/software/scripts/exit-codes.sh
+source ~/software/scripts-dev/exit-codes.sh
 
 # Goal: decompress a zip file from 'source' to 'destination'
 # Parameters {
