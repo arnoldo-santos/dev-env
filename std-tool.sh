@@ -7,8 +7,14 @@ SKIP=0
 NO=1
 ERROR=1
 
+declare -A OPERATION=(
+	[nothing_to_do]=0
+	[install]=1
+	[upgrade]=2
+)
+
 # old name = reload_shell_config
-function restart_shell() {
+function restart_zsh() {
 	exec zsh -l
 }
 

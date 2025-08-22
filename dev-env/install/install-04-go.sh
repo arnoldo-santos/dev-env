@@ -44,13 +44,6 @@ SOFTWARE[binary_file]="${SOFTWARE[installation_dir]}/bin/${SOFTWARE[binary]}"
 SOFTWARE[installation_file]="${SOFTWARE[download_dir]}/${SOFTWARE[file_name]}"
 SOFTWARE[symlink]="${HOME}/.local/bin/${SOFTWARE[binary]}"
 
-# operations' data
-declare -A OPERATION=(
-    [nothing_to_do]=0
-    [install]=1
-    [upgrade]=2
-)
-
 function report_what_to_do() {
     echo "Checking ${SOFTWARE[name]}..."
 
@@ -190,7 +183,6 @@ function check_go() {
 
 function run() {
     local outcome
-
     report_what_to_do
     outcome=$?
 

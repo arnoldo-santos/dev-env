@@ -3,146 +3,92 @@
 # shfmt: to format scripts
 
 set -e # Exit immediately if a command exits with a non-zero status.
+THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 
 # imports
-source "${HOME}/software/scripts/tool/symlink.sh"
-source "${HOME}/software/scripts/tool/installation.sh"
-
-# variables
-SUCCESS=0
-FAILURE=1
+source ~/software/scripts-dev/std-tool.sh
+source ~/software/scripts-dev/tool/symlink.sh
+source ~/software/scripts-dev/tool/version.sh
+source ~/software/scripts-dev/tool/git-repo.sh
+source ~/software/scripts-dev/tool/installation.sh
 
 # shfmt's data
-declare -A SHFMT=(
-   [name]="Shell Format"
-   [binary]=shfmt
-   [parent_dir]="${HOME}/software"
-   [download_dir]="${HOME}/Downloads"
+declare -A SOFTWARE=(
+    [name]="ShellFormat"
+    [binary]=shfmt
+    [parent_dir]="${HOME}/software"
+    [download_dir]="${HOME}/Downloads"
+    [version_to_install]=$(get_latest_lts_github_release "mvdan/sh")
 )
 
-SHFMT[binary_path]="${HOME}/go/bin/${SHFMT[binary]}"
-SHFMT[symlink]="${HOME}/.local/bin/${SHFMT[binary]}"
-GO_INSTALLATION_SCRIPT="${HOME}/software/scripts/dev-env/essentials/dependencies/bash-lsp/golang.sh"
+SOFTWARE[binary_path]="${HOME}/go/bin/${SOFTWARE[binary]}"
+SOFTWARE[symlink]="${HOME}/.local/bin/${SOFTWARE[binary]}"
 
+function report_what_to_do() {
+    echo "Checking ${SOFTWARE[name]}..."
 
+    # software is installed
+    if is_installed "${SOFTWARE[binary]}"; then
 
-check_go() {
-   if installed go; then
-      echo "Go is already installed"
-      return "${SUCCESS}"
-   else
-      echo "Go is not installed"
-      return "${FAILURE}"
-   fi
+        SOFTWARE[installed_version]=$("${SOFTWARE[binary]}" --version | cut -d' ' -f3 | tr -d 'v')
+
+        # software is up to date
+        if ! version_is_greater "${SOFTWARE[version_to_install]}" "${SOFTWARE[installed_version]}"; then
+            echo "${SOFTWARE[name]} v${SOFTWARE[installed_version]} is up to date!"
+            return "${OPERATION[nothing_to_do]}"
+        fi
+
+        # software needs upgrade
+        echo "New version found: ${SOFTWARE[version_to_install]}"
+        echo "Upgrading ${SOFTWARE[name]}..."
+        return "${OPERATION[upgrade]}"
+    fi
+
+    # software is not installed
+    echo "Installing ${SOFTWARE[name]}..."
+    return "${OPERATION[install]}"
 }
 
+function install_software() {
+    if {
+        go install mvdan.cc/sh/v3/cmd/shfmt@latest &&
+            make_symlink "${SOFTWARE[binary_path]}" "${SOFTWARE[symlink]}" &&
+            refresh_zsh
+    }; then
+        return "$OK"
+    fi
 
-
-install_go() {
-   if [ ! -f "$GO_INSTALLATION_SCRIPT" ]; then
-      echo "ERROR: Go installation script not found at ${GO_INSTALLATION_SCRIPT}"
-      return "${FAILURE}"
-   fi
-
-   echo "Installing Go..."
-   bash "${GO_INSTALLATION_SCRIPT}"
+    return "$ERROR"
 }
 
+function run() {
+    local outcome
+    report_what_to_do
+    outcome=$?
 
+    # software is up to date
+    if ((outcome == OPERATION[nothing_to_do])); then
+        echo "Nothing to do"
+        return "$OK"
+    fi
 
-manage_go() {
-   local go_installation
+    # install software
+    if ((outcome == OPERATION[install])); then
+        install_software || return "$ERROR"
+        echo "done!"
+        return "$OK"
+    fi
 
-   check_go
-   go_installation=$?
+    # upgrade software
+    if ((outcome == OPERATION[upgrade])); then
+        install_software || return "$ERROR"
+        echo "done!"
+        return "$OK"
+    fi
 
-   # Go is already installed
-   [ "${go_installation}" -eq "${SUCCESS}" ] && return "${SUCCESS}"
-
-   # else: Go is not installed
-   install_go
-   go_installation=$?
-
-   # check installation error
-   [ "${go_installation}" -eq "${FAILURE}" ] && return "${FAILURE}"
+    # handle error
+    echo "ERROR: invalid exit status of function 'report_what_to_do()' in script ${THIS_SCRIPT_PATH}" >&2
+    return "$ERROR"
 }
 
-
-
-install_shfmt() {
-   # installation OK
-   go install mvdan.cc/sh/v3/cmd/shfmt@latest && return "${SUCCESS}"
-   # else: installation failed
-   return "${FAILURE}"
-}
-
-
-
-exit_script_if_error() {
-   local operation_status=$1
-   local error_message=$2
-
-   if [ "${operation_status}" -eq "${FAILURE}" ]; then
-      echo "${error_message}"
-      exit "${FAILURE}"
-   fi
-}
-
-
-
-manage_shfmt() {
-   # parameter
-   local action=$1
-   # operations status
-   local symlink_status
-   local installation_status
-   # error messages
-   local installation_err_mssg="ERROR: ${SHFMT[name]} installation failed"
-   local symlink_err_mssg="ERROR: ${SHFMT[name]} symlink failed"
-
-   manage_go
-   install_shfmt
-   installation_status=$?
-   # error -?> exit
-   exit_script_if_error "${installation_status}" "${installation_err_mssg}"
-
-   # ! error -?> make symlink
-   manage_symlink "${action}" "${SHFMT[binary_path]}" "${SHFMT[symlink]}"
-   symlink_status=$?
-   # error -> exit
-   exit_script_if_error "${symlink_status}" "${symlink_err_mssg}"
-}
-
-
-
-run_script() {
-
-   # shfmt isn't installed
-   if ! installed "${SHFMT[binary]}"; then
-      echo "${SHFMT[name]} is not installed. Installing it..."
-      manage_shfmt "creation"
-
-   # shfmt is installed
-   else
-      echo "${SHFMT[name]} is already installed. Upgrading it..."
-
-      local old_version
-      local new_version
-
-      old_version=$("${SHFMT[binary]}" --version | cut -d' ' -f3)
-
-      manage_shfmt "upgrade"
-
-      new_version=$("${SHFMT[binary]}" --version | cut -d' ' -f3)
-
-      if [ "${old_version}" != "${new_version}" ]; then
-         echo "${SHFMT[name]} has been updated from ${old_version} to ${new_version} successfully"
-      else
-         echo "${SHFMT[name]} is already up-to-date"
-      fi
-   fi
-}
-
-
-
-run_script
+run
