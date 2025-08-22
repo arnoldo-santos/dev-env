@@ -53,9 +53,11 @@ function make_symlink() {
     local options="${4:--sf}"    # default to "-sf" if not provided
     local cmd
 
+    echo "Checking symlink ${symlink} -> ${source}..."
+
     # check if the symlink already exists and is correct
     if is_a_symlink "${symlink}" && symlink_is_ok "${source}" "${symlink}"; then
-        echo "OK: symlink '${symlink}' is fine!"
+        echo "OK: symlink is fine!"
         return "$OK"
     fi
 
@@ -71,11 +73,11 @@ function make_symlink() {
 
     # execute the command
     eval "${cmd}" && {
-        echo "OK: symlink made successfully: '${symlink}'"
+        echo "OK: symlink made successfully: ${symlink} -> ${source}"
         return "$OK"
     }
 
     # handle failure
-    echo "ERROR: symlink creation failed: '${symlink}'" >&2
+    echo "ERROR: symlink creation failed: ${symlink} -> ${source}" >&2
     return "$ERROR"
 }

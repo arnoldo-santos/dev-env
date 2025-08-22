@@ -116,4 +116,4 @@ function install_programs() {
     return "$OK"
 }
 
-install_programs && reload_shell_config
+install_programs && reload_zsh_config

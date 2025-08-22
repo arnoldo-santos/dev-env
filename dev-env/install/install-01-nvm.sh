@@ -1,5 +1,5 @@
 #!/bin/bash
-# file = install-nvm.sh
+# file = install-01-nvm.sh
 # nvm: Node Version Manager
 
 set -e # Exit immediately if a command exits with a non-zero status.
@@ -18,14 +18,14 @@ declare -A SOFTWARE=(
 function install_program() {
     local prog_id="${SOFTWARE[id]}"
     local prog_name="${SOFTWARE[name]}"
-    local prog_version="v${SOFTWARE[version]}"
+    local prog_version="${SOFTWARE[version]}"
 
     is_installed "${prog_id}" && {
         echo "${prog_name} is already installed!"
         return "$OK"
     }
 
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/"${prog_version}"/install.sh | bash && {
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/"v${prog_version}"/install.sh | bash && {
         echo "OK: ${prog_name} installed successfully!"
         return "$OK"
     }
@@ -34,4 +34,4 @@ function install_program() {
     return "$ERROR"
 }
 
-install_program && reload_shell_config
+install_program && reload_zsh_config

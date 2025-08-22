@@ -39,7 +39,7 @@ function install_program() {
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
-    nvm install node && reload_shell_config && add_nodejs_family_binaries_to_zshrc
+    nvm install node && reload_zsh_config && add_nodejs_family_binaries_to_zshrc
 }
 
-install_program && reload_shell_config
+install_program && reload_zsh_config

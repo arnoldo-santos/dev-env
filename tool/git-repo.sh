@@ -107,7 +107,7 @@ function get_latest_lts_github_release() {
             select(test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) |
             sub("^v"; "")
         ' |
-        sort -v |
+        sort -V |
         tail -n1
 }
 

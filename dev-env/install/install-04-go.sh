@@ -1,10 +1,10 @@
 #!/bin/bash
 # file = install-04-go.sh
 
-source ~/software/scripts-dev/dev-env/tool/version.sh
-source ~/software/scripts-dev/dev-env/tool/symlink.sh
-source ~/software/scripts-dev/dev-env/tool/installation.sh
-source ~/software/scripts-dev/dev-env/tool/git-repo.sh
+source ~/software/scripts-dev/tool/version.sh
+source ~/software/scripts-dev/tool/symlink.sh
+source ~/software/scripts-dev/tool/installation.sh
+source ~/software/scripts-dev/tool/git-repo.sh
 source ~/software/scripts-dev/std-tool.sh
 
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
@@ -25,6 +25,10 @@ function get_latest_stable_go_release() {
     return "$OK"
 }
 
+function get_go_installed_version() {
+    go version | awk '{print $3}' | sed 's/go//'
+}
+
 declare -A SOFTWARE=(
     [name]=Go
     [binary]=go
@@ -42,138 +46,122 @@ SOFTWARE[symlink]="${HOME}/.local/bin/${SOFTWARE[binary]}"
 
 # operations' data
 declare -A OPERATION=(
-    [nothing_to_do]=1
-    [install]=2
-    [upgrade]=3
+    [nothing_to_do]=0
+    [install]=1
+    [upgrade]=2
 )
 
-function report_operation_to_do() {
-    # Go is installed
+function report_what_to_do() {
+    echo "Checking ${SOFTWARE[name]}..."
+
+    # software is installed
     if is_installed "${SOFTWARE[binary]}"; then
 
-        local go_installed_version
-        go_installed_version=$(go version | awk '{print $3}' | sed 's/go//')
-        echo "${SOFTWARE[name]} version ${go_installed_version} is already installed"
+        SOFTWARE[installed_version]=$(get_go_installed_version)
 
-        # Go needs upgrade
-        if version_is_greater "${SOFTWARE[version_to_install]}" "${go_installed_version}"; then
-            echo "A newer version (${SOFTWARE[version_to_install]}) is available. Proceeding with upgrade..."
-            return "${OPERATION[upgrade]}"
+        # software is up to date
+        if ! version_is_greater "${SOFTWARE[version_to_install]}" "${SOFTWARE[installed_version]}"; then
+            echo "${SOFTWARE[name]} v${SOFTWARE[installed_version]} is up to date!"
+            return "${OPERATION[nothing_to_do]}"
         fi
 
-        # Go is up to date
-        echo "The installed version is up to date or newer. No action needed"
-        return "${OPERATION[nothing_to_do]}"
+        # software needs upgrade
+        echo "New version found: ${SOFTWARE[version_to_install]}"
+        echo "Upgrading ${SOFTWARE[name]}..."
+        return "${OPERATION[upgrade]}"
     fi
 
-    # Go is not installed
-    echo "${SOFTWARE[name]} is not installed. Proceeding with installation..."
+    # software is not installed
+    echo "Installing ${SOFTWARE[name]}..."
     return "${OPERATION[install]}"
 }
 
-# Download Go
-function download_go() {
-    echo "Downloading ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]}..."
+function download_software() {
+    echo "Downloading ${SOFTWARE[name]} v${SOFTWARE[version_to_install]}..."
     mkdir -p "${SOFTWARE[download_dir]}"
 
     # download failed
     if ! curl -Lo "${SOFTWARE[installation_file]}" "${SOFTWARE[download_url]}"; then
-        echo "ERROR: failed to download ${SOFTWARE[name]}. Please check your internet connection and the version number" >&2
+        echo "ERROR: failed to download ${SOFTWARE[name]} v${SOFTWARE[version_to_install]}" >&2
+        echo "WARNING: check your internet connection and the version number" >&2
         return "$ERROR"
     fi
 
     # download success
-    echo "OK: download successful!"
+    echo "done!"
     return "$OK"
 }
 
-# Install Go
-function install_go() {
-    echo "Installing ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]}..."
+function install_software() {
+    echo "Installing ${SOFTWARE[name]} v${SOFTWARE[version_to_install]}..."
 
     mkdir -p "${SOFTWARE[parent_dir]}"
 
     # installation failed
     if ! tar -C "${SOFTWARE[parent_dir]}" -xzf "${SOFTWARE[installation_file]}"; then
-        echo "ERROR: failed to install ${SOFTWARE[name]}. Please check your permissions and disk space" >&2
+        echo "ERROR: failed to install ${SOFTWARE[name]} v${SOFTWARE[version_to_install]}" >&2
+        echo "WARNING: check your permissions and disk space" >&2
         return "$ERROR"
     fi
 
     # installation successful
-    echo "OK: ${SOFTWARE[name]} version ${SOFTWARE[version_to_install]} installed successfully!"
+    make_symlink "${SOFTWARE[binary_file]}" "${SOFTWARE[symlink]}" || return "${ERROR}"
+    refresh_zsh || return "$ERROR"
+
+    echo "done!"
     return "$OK"
 }
 
-# Remove any previous Go installation
-function uninstall_go() {
-    echo "Checking for existing ${SOFTWARE[name]} installation..."
-
-    # installation directory exists
-    if [[ -d "${SOFTWARE[installation_dir]}" ]]; then
-
-        echo "Uninstalling previous ${SOFTWARE[name]} installation in ${SOFTWARE[installation_dir]}..."
-
-        # Removing installation directory failed
-        if ! rm -rf "${SOFTWARE[installation_dir]}"; then
-
-            echo "ERROR: failed to remove existing ${SOFTWARE[name]} installation. Please check your permissions" >&2
-            return "$ERROR"
-        fi
-
-        # installation directory removed successfully
-        echo "OK: ${SOFTWARE[name]} uninstallation successful!"
-        return "$OK"
-    fi
+function uninstall_software() {
+    echo "Uninstalling ${SOFTWARE[name]}..."
 
     # installation directory does not exist
-    echo "WARNING: can't find a ${SOFTWARE[name]} installation directory" >&2
-    echo "ERROR: ${SOFTWARE[name]} uninstallation failed" >&2
-    return "$ERROR"
+    if [[ ! -d "${SOFTWARE[installation_dir]}" ]]; then
+        echo "ERROR: uninstallation failed" >&2
+        echo "WARNING: can't find a ${SOFTWARE[name]} installation directory" >&2
+        return "$ERROR"
+    fi
+
+    # uninstallation failed
+    # Always attempt both, fail if either fails
+    if ! {
+        rm -rf "${SOFTWARE[installation_dir]}" &
+        rm -f "${SOFTWARE[symlink]}" &
+        wait
+    }; then
+        echo "ERROR: uninstallation failed" >&2
+        echo "WARNING: check your permissions" >&2
+        return "$ERROR"
+    fi
+
+    # uninstallation successful
+    refresh_zsh || return "$ERROR"
+    echo "done!"
+    return "$OK"
 }
 
 function clean_up() {
-    echo "Cleaning up ${SOFTWARE[name]} installation file ${SOFTWARE[installation_file]}..."
+    echo "Cleaning Up..."
 
-    # clean up successful
-    rm -f "${SOFTWARE[installation_file]}" && {
-        echo "OK: ${SOFTWARE[name]} installation file cleaned up successfully!"
-        return "$OK"
-    }
+    # failure
+    if ! rm -f "${SOFTWARE[installation_file]}"; then
+        echo "ERROR: clean up failed" >&2
+        return "$ERROR"
+    fi
 
-    # clean up failed
-    echo "ERROR: ${SOFTWARE[name]} installation file clean up failed"
-    return "$ERROR"
+    # success
+    echo "done!"
+    return "$OK"
 }
 
-# Goal {
-#   Install or Upgrade program depending of the given 'action' parameter
-# }
-# Parameters {
-#   1) action   <- string { "creation" | "update" }
-# }
-# Returns {
-#   True  -> 0
-#   False -> non-zero
-# }
-manage_program() {
-    # parameter
-    local action="${1}"
-    # flags
-    local success=0
-    local failure=1
-
-    download_go || return "${failure}"
-
-    install_go || return "${failure}"
-
-    make_symlink "${action}" "${SOFTWARE[binary_file]}" "${SOFTWARE[symlink]}" || return "${failure}"
-
-    clean_up || return "${failure}"
-
-    return "${success}"
+function manage_software_installation() {
+    download_software || return "${ERROR}"
+    install_software || return "${ERROR}"
+    clean_up || return "${ERROR}"
+    return "${OK}"
 }
 
-go_installed_ok() {
+function go_installed_ok() {
     go version &>/dev/null
 }
 
@@ -187,58 +175,49 @@ go_installed_ok() {
 #   True  -> ^ 0
 #   False -> ^ 1
 # }
-check_go() {
+function check_go() {
     local action="${1}"
-
-    # source ~/.bashrc
 
     go_installed_ok && {
         echo "OK: ${SOFTWARE[name]} ${action} completed!"
-        return "${SOFTWARE[success]}"
+        return "$OK"
     }
 
     # handle error
     echo "ERROR: ${SOFTWARE[name]} ${action} failed" >&2
-    return "${SOFTWARE[failure]}"
+    return "$ERROR"
 }
 
-run() {
+function run() {
     local outcome
-    report_operation_to_do
+
+    report_what_to_do
     outcome=$?
 
-    # Go is up to date
-    if [ "${outcome}" -eq "${OPERATION[nothing_to_do]}" ]; then
-        return "${SOFTWARE[success]}"
+    # software is up to date
+    if ((outcome == OPERATION[nothing_to_do])); then
+        echo "Nothing to do"
+        return "$OK"
     fi
 
-    local action
-
-    # install Go
-    if [ "${outcome}" -eq "${OPERATION[install]}" ]; then
-        action="creation"
-
-        manage_program "${action}" || return "${SOFTWARE[failure]}"
-
-        check_go "installation" && return "${SOFTWARE[success]}"
-        return "${SOFTWARE[failure]}"
+    # install software
+    if ((outcome == OPERATION[install])); then
+        manage_software_installation || return "$ERROR"
+        check_go "installation" || return "$ERROR"
+        return "$OK"
     fi
 
-    # upgrade Go
-    if [ "${outcome}" -eq "${OPERATION[upgrade]}" ]; then
-        action="upgrade"
-
-        uninstall_go || return "${SOFTWARE[failure]}"
-
-        manage_program "${action}" || return "${SOFTWARE[failure]}"
-
-        check_go "upgrade" && return "${SOFTWARE[success]}"
-        return "${SOFTWARE[failure]}"
+    # upgrade software
+    if ((outcome == OPERATION[upgrade])); then
+        uninstall_software || return "$ERROR"
+        manage_software_installation || return "$ERROR"
+        check_go "upgrade" || return "$ERROR"
+        return "$OK"
     fi
 
     # handle error
-    echo "ERROR: invalid outcome of function 'report_operation_to_do' in function 'run' in script ${THIS_SCRIPT_PATH}" >&2
-    return "${SOFTWARE[failure]}"
+    echo "ERROR: invalid exit status of function 'report_what_to_do()' in script ${THIS_SCRIPT_PATH}" >&2
+    return "$ERROR"
 }
 
 run

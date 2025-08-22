@@ -12,8 +12,16 @@ function restart_shell() {
 	exec zsh -l
 }
 
-function reload_shell_config() {
+function reload_zsh_config() {
 	zsh -c "source ~/.zshenv && source ~/.zshrc"
+}
+
+function refresh_zsh() {
+	if ! reload_zsh_config; then
+		echo "ERROR: failed to reload zsh config" >&2
+		return "$ERROR"
+	fi
+	return "$OK"
 }
 
 # aliases to echo
