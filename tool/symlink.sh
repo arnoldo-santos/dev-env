@@ -2,39 +2,32 @@
 # file = tool/symlink.sh
 source ~/software/scripts-dev/std-tool.sh
 
-# Goal {
-#   Check if a path exists
-# }
-# Parameters {
-#   1) path = some path
-# }
+# Check if a path exists (file, directory, symlink, etc.)
 function path_exists() {
     local path="$1"
-    [[ -e "${path}" ]]
+    [[ -e "${path}" || -L "${path}" ]]
 }
 
-# Goal {
-#   Check if a path is a symlink
-# }
-# Parameters {
-#   1) path = some path
-# }
-function is_a_symlink() {
+# Get the absolute canonical path by resolving all symlinks
+function get_canonical_path() {
     local path="$1"
-    [[ -L "${path}" ]]
+    readlink -f "${path}"
 }
 
-# Goal {
-#   Check if a symlink points to a source
-# }
-# Parameters {
-#   1) source   = some path
-#   2) symlink  = some path
-# }
-function symlink_is_ok() {
-    local source="$1"
-    local symlink="$2"
-    [[ "$(readlink -f "${source}")" == "$(readlink -f "${symlink}")" ]]
+# Check if a path is a symbolic link
+function is_symbolic_link() {
+    local path="$1"
+    path_exists "${path}" && [[ -L "${path}" ]]
+}
+
+# Check if two paths resolve to the same target
+function paths_resolve_to_same_target() {
+    local path1="$1"
+    local path2="$2"
+
+    # Both paths must exist
+    path_exists "${path1}" && path_exists "${path2}" &&
+        [[ "$(get_canonical_path "${path1}")" == "$(get_canonical_path "${path2}")" ]]
 }
 
 # Goal {
@@ -56,7 +49,7 @@ function make_symlink() {
     echo "Checking symlink ${symlink} -> ${source}..."
 
     # check if the symlink already exists and is correct
-    if is_a_symlink "${symlink}" && symlink_is_ok "${source}" "${symlink}"; then
+    if is_symbolic_link "${symlink}" && paths_resolve_to_same_target "${source}" "${symlink}"; then
         echo "OK: symlink is fine!"
         return "$OK"
     fi
@@ -74,6 +67,7 @@ function make_symlink() {
     # execute the command
     eval "${cmd}" && {
         echo "OK: symlink made successfully: ${symlink} -> ${source}"
+        refresh_zsh || return "$ERROR"
         return "$OK"
     }
 

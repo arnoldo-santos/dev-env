@@ -2,7 +2,7 @@
 # file = install-shfmt.sh
 # shfmt: to format scripts
 
-set -e # Exit immediately if a command exits with a non-zero status.
+# set -e # Exit immediately if a command exits with a non-zero status.
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 
 # imports
@@ -50,15 +50,27 @@ function report_what_to_do() {
 }
 
 function install_software() {
-    if {
-        go install mvdan.cc/sh/v3/cmd/shfmt@latest &&
-            make_symlink "${SOFTWARE[binary_path]}" "${SOFTWARE[symlink]}" &&
-            refresh_zsh
-    }; then
-        return "$OK"
+    if go install mvdan.cc/sh/v3/cmd/shfmt@latest; then
+        if make_symlink "${SOFTWARE[binary_path]}" "${SOFTWARE[symlink]}"; then
+            return "$OK"
+        fi
+        echo "ERROR: function 'make_symlink()' failed" >&2
+        return "$ERROR"
     fi
 
+    echo "ERROR: command 'go instasll' failed" >&2
     return "$ERROR"
+}
+
+function manage_software() {
+    local action="$1"
+
+    install_software || {
+        echo "ERROR: ${SOFTWARE[name]} $action failed" >&2
+        return "$ERROR"
+    }
+    echo "done!"
+    return "$OK"
 }
 
 function run() {
@@ -74,15 +86,13 @@ function run() {
 
     # install software
     if ((outcome == OPERATION[install])); then
-        install_software || return "$ERROR"
-        echo "done!"
+        manage_software "installation" || return "$ERROR"
         return "$OK"
     fi
 
     # upgrade software
     if ((outcome == OPERATION[upgrade])); then
-        install_software || return "$ERROR"
-        echo "done!"
+        manage_software "upgrade" || return "$ERROR"
         return "$OK"
     fi
 
