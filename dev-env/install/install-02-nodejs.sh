@@ -15,8 +15,7 @@ function add_nodejs_family_binaries_to_zshrc() {
     fi
 
     local node_path="\${HOME}/.nvm/versions/node/${version}/bin"
-    local new_path_block="
-# Add Node.js ${version} to PATH
+    local new_path_block="# Add Node.js ${version} to PATH
 export PATH=\"\${PATH}:${node_path}\""
 
     local zshrc="$HOME/.zshrc"
