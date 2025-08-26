@@ -2,7 +2,7 @@
 # file = install-shfmt.sh
 # shfmt: to format scripts
 
-# set -e # Exit immediately if a command exits with a non-zero status.
+set -e # Exit immediately if a command exits with a non-zero status.
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 
 # imports
