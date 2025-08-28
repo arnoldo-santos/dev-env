@@ -5,8 +5,8 @@
 source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/version.sh
 source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/dev-env/tool/installation.sh
-source ~/software/scripts-dev/dev-env/tool/update-path.sh
+source ~/software/scripts-dev/tool/installation.sh
+source ~/software/scripts-dev/tool/update-path.sh
 
 # Set exit on error
 set -e
@@ -17,7 +17,8 @@ declare -A SOFTWARE=(
     [dependency]=pipx
     [version_to_install]=$(get_latest_lts_github_release "psf/black")
 )
-SOFTWARE[binary_path]="${HOME}/.local/bin/${SOFTWARE[binary]}"
+SOFTWARE[binary_directory]="${HOME}/.local/bin"
+SOFTWARE[binary_path]="${SOFTWARE[binary_directory]}/${SOFTWARE[binary]}"
 SOFTWARE[install_cmd]="${SOFTWARE[dependency]} install ${SOFTWARE[binary]}"
 
 # ------------ NEW CODE ---------------------
@@ -59,88 +60,85 @@ function report_what_to_do() {
     return "${OPERATION[install]}"
 }
 
-function install_software() {
-    if bash -c "${SOFTWARE[install_cmd]}"; then
-        echo "done!"
-        return "$OK"
-    else
-        echo "ERROR: failed to install ${SOFTWARE[name]}" >&2
-        return 1 # fuck
-    fi
-
-}
-
-# -------------------------------------------
-function check_dependency() {
+# install|upgrade dependency
+function install_dependency() {
     local dependency="${SOFTWARE[dependency]}"
 
     echo "Checking dependency ${dependency}..."
 
     if sudo nala install "${dependency}"; then
         echo "done!"
-        return 0 # ok
+        return "$OK"
     else
         echo "ERROR: failed to install dependency ${dependency}" >&2
-        return 1 # fuck
-    fi
-}
-
-function check_program() {
-    local binary="${SOFTWARE[binary]}"
-    local prog_name="${SOFTWARE[name]}"
-    local prog_full_name="${SOFTWARE[full_name]}"
-
-    echo "Checking ${prog_full_name}..."
-
-    if is_installed "${binary}"; then
-        echo "${prog_name} is already installed"
-        echo "Upgrading it..."
-    else
-        echo "${prog_name} isn't installed"
-        echo "Installing it..."
-    fi
-}
-
-function install_program() {
-    local prog_name="${SOFTWARE[name]}"
-    local install_cmd="${SOFTWARE[install_cmd]}"
-
-    if bash -c "${install_cmd}"; then
-        echo "done!"
-        return 0 # ok
-    else
-        echo "ERROR: failed to install ${prog_name}" >&2
-        return 1 # fuck
+        return "$ERROR"
     fi
 
 }
 
-function update_PATH() {
+function install_software() {
+    bash -c "${SOFTWARE[install_cmd]}"
+}
+
+function update_path() {
+    local bin_dir="${SOFTWARE[binary_directory]}"
     local bin_path="${SOFTWARE[binary_path]}"
 
     echo "Updating \$PATH..."
-    [[ ! -d "$bin_path" ]] && mkdir -p "$bin_path"
+    [[ ! -d "$bin_dir" ]] && mkdir -p "$bin_dir"
 
-    if update_path "$bin_path"; then
+    if update_PATH "$bin_path"; then
         echo "done!"
-        return 0 # ok
+        return "$OK"
     else
         echo "ERROR: failed to update \$PATH with $bin_path" >&2
-        return 1 # fuck
+        return "$ERROR"
+    fi
+}
+
+# param: action = installation | upgrade
+function manage_software() {
+    local action="$1"
+
+    install_dependency || return "$ERROR"
+
+    if ! install_software; then
+        echo "ERROR: ${SOFTWARE[name]} $action failed" >&2
+        return "$ERROR"
     fi
 
+    update_path || return "$ERROR"
+
+    echo "OK: ${SOFTWARE[name]} $action successfull!"
+    return "$OK"
 }
 
-function manage_program() {
-    local prog_full_name="${SOFTWARE[full_name]}"
+function run() {
+    local outcome
+    report_what_to_do
+    outcome=$?
 
-    check_program
-    check_dependency || return 1 # fuck
-    install_program || return 1  # fuck
-    update_PATH || return 1      # fuck
+    # software is up to date
+    if ((outcome == OPERATION[nothing_to_do])); then
+        echo "Nothing to do"
+        return "$OK"
+    fi
 
-    echo "${prog_full_name}: OK!"
-    return 0 # ok
+    # install software
+    if ((outcome == OPERATION[install])); then
+        manage_software "installation" || return "$ERROR"
+        return "$OK"
+    fi
+
+    # upgrade software
+    if ((outcome == OPERATION[upgrade])); then
+        manage_software "upgrade" || return "$ERROR"
+        return "$OK"
+    fi
+
+    # handle error
+    echo "ERROR: invalid exit status of function 'report_what_to_do()' in script ${THIS_SCRIPT_PATH}" >&2
+    return "$ERROR"
 }
 
-manage_program
+run
