@@ -152,6 +152,7 @@ function prompt_add_to_PATH() {
 
         if update_PATH_in_zshrc "${new_path}"; then
             echo -e "${GREEN}OK: ${binary_path} added to PATH${RESET}"
+            refresh_zsh || return "$ERROR"
             return "$OK"
         else
             echo -e "${RED}ERROR: Failed to add ${binary_path} to PATH${RESET}"
@@ -175,17 +176,18 @@ function update_PATH() {
         return "$ERROR"
     fi
 
-    local binary_path="${1}"
-    is_binary_path_ok "${binary_path}" || return "$ERROR"
+    local binary_directory="${1}"
+    is_binary_path_ok "${binary_directory}" || return "$ERROR"
 
-    if is_in_PATH "${binary_path}"; then
+    if is_in_PATH "${binary_directory}"; then
 
         # if (($(grep -o ":${binary_path}:" <<<":${PATH}:" | wc -l) > 1)); then
-        if has_duplicate_in_PATH "${binary_path}"; then
-            new_path=$(remove_duplicates_in_PATH "${binary_path}")
+        if has_duplicate_in_PATH "${binary_directory}"; then
+            new_path=$(remove_duplicates_in_PATH "${binary_directory}")
 
             if update_PATH_in_zshrc "${new_path}"; then
-                echo -e "${GREEN}Duplicate occurrences of ${binary_path} removed from PATH.${RESET}"
+                echo -e "${GREEN}Duplicate occurrences of ${binary_directory} removed from PATH.${RESET}"
+                refresh_zsh || return "$ERROR"
                 return "$OK"
             else
                 echo -e "${RED}ERROR: Failed to add ${new_path} to PATH${RESET}"
@@ -193,11 +195,11 @@ function update_PATH() {
             fi
 
         else
-            echo -e "${GREEN}${binary_path} is already in PATH without duplicates.${RESET}"
+            echo -e "${GREEN}${binary_directory} is already in PATH without duplicates.${RESET}"
             return "$OK"
         fi
 
     else
-        prompt_add_to_PATH "$binary_path"
+        prompt_add_to_PATH "$binary_directory"
     fi
 }

@@ -6,10 +6,6 @@ source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/version.sh
 source ~/software/scripts-dev/tool/git-repo.sh
 source ~/software/scripts-dev/tool/installation.sh
-source ~/software/scripts-dev/tool/update-path.sh
-
-# Set exit on error
-set -e
 
 declare -A SOFTWARE=(
     [name]="Black (Python Code Formatter)"
@@ -18,10 +14,7 @@ declare -A SOFTWARE=(
     [version_to_install]=$(get_latest_lts_github_release "psf/black")
 )
 SOFTWARE[binary_directory]="${HOME}/.local/bin"
-SOFTWARE[binary_path]="${SOFTWARE[binary_directory]}/${SOFTWARE[binary]}"
 SOFTWARE[install_cmd]="${SOFTWARE[dependency]} install ${SOFTWARE[binary]}"
-
-# ------------ NEW CODE ---------------------
 
 function get_black_installed_version() {
     local version_output
@@ -78,22 +71,8 @@ function install_dependency() {
 
 function install_software() {
     bash -c "${SOFTWARE[install_cmd]}"
-}
-
-function update_path() {
-    local bin_dir="${SOFTWARE[binary_directory]}"
-    local bin_path="${SOFTWARE[binary_path]}"
-
-    echo "Updating \$PATH..."
-    [[ ! -d "$bin_dir" ]] && mkdir -p "$bin_dir"
-
-    if update_PATH "$bin_path"; then
-        echo "done!"
-        return "$OK"
-    else
-        echo "ERROR: failed to update \$PATH with $bin_path" >&2
-        return "$ERROR"
-    fi
+    # eval "${SOFTWARE[install_cmd]}"
+    # pipx install black
 }
 
 # param: action = installation | upgrade
@@ -102,15 +81,14 @@ function manage_software() {
 
     install_dependency || return "$ERROR"
 
-    if ! install_software; then
-        echo "ERROR: ${SOFTWARE[name]} $action failed" >&2
-        return "$ERROR"
+    if install_software; then
+        echo "OK: ${SOFTWARE[name]} $action successfull!"
+        return "$OK"
     fi
 
-    update_path || return "$ERROR"
+    echo "ERROR: ${SOFTWARE[name]} $action failed" >&2
+    return "$ERROR"
 
-    echo "OK: ${SOFTWARE[name]} $action successfull!"
-    return "$OK"
 }
 
 function run() {
@@ -137,7 +115,7 @@ function run() {
     fi
 
     # handle error
-    echo "ERROR: invalid exit status of function 'report_what_to_do()' in script ${THIS_SCRIPT_PATH}" >&2
+    echo "ERROR: invalid exit status" >&2
     return "$ERROR"
 }
 
