@@ -1,6 +1,7 @@
 #!/bin/bash
 # file = install-07-clangd.sh
 
+source ~/software/scripts-dev/std-tool.sh
 source ~/software/scripts-dev/tool/download.sh
 source ~/software/scripts-dev/tool/decompress.sh
 source ~/software/scripts-dev/tool/binary.sh
@@ -23,33 +24,35 @@ SOFTWARE[download_url]="https://github.com/${SOFTWARE[binary]}/${SOFTWARE[binary
 
 DOWNLOAD_DIR_CREATED=0
 
+function get_clangd_installed_version() {
+    echo "$(clangd --version | grep -oP '\d+\.\d+\.\d+' | head -n1)"
+}
+
 function report_what_to_do() {
     local binary="${SOFTWARE[binary]}"
-    local prog_name="${SOFTWARE[binary]^}"
+    local software_name="${SOFTWARE[binary]^}"
     local latest_version="${SOFTWARE[latest_version]}"
 
+    # software is installed
     if is_installed "${binary}"; then
-        local current_version
-        current_version=$("${binary}" --version | grep -oP '\d+\.\d+\.\d+' | head -n1)
+        local installed_version
+        installed_version=$(get_clangd_installed_version)
 
-        if [[ "$current_version" == "$latest_version" ]]; then
-            echo "OK: ${prog_name} v${current_version} is up to date"
-            echo "Nothing to do"
-            return 0
-        else
-            echo "${prog_name} is outdated"
-            echo "Installed version: $current_version"
-            echo "Available version: $latest_version"
-            echo "Proceeding with upgrade..."
-            echo "Upgrading ${prog_name} version $latest_version..."
-            return 1 # fuck
+        # software is up to date
+        if [[ "$installed_version" == "$latest_version" ]]; then
+            echo "OK: ${software_name} v${installed_version} is up to date!"
+            return "${OPERATION[nothing_to_do]}"
         fi
+
+        # software needs upgrade
+        echo "New version found: $latest_version"
+        echo "Upgrading $software_name..."
+        return "${OPERATION[upgrade]}"
     fi
 
-    echo "$prog_name isn't installed"
-    echo "Proceeding with install..."
-    echo "Installing ${prog_name} version $latest_version..."
-    return 2 # fuck
+    # software is not installed
+    echo "Installing $software_name..."
+    return "${OPERATION[install]}"
 }
 
 function download_software() {
@@ -69,21 +72,21 @@ function download_software() {
 function remove_old_software_version() {
     local installation_dir="${SOFTWARE[installation_dir]}"
 
-    # nothing to remove
+    # installation dir doesn't exists
     if [[ ! -d "${installation_dir}" ]]; then
-        mkdir -p "${installation_dir}"
-        echo "New installation directory created: $installation_dir"
-        return 0 # ok
+        echo "ERROR: can't find $installation_dir" >&2
+        return "$ERROR"
     fi
 
     # clean previous installation files
-    echo "Cleaning previous installation files in $installation_dir"
+    echo "Cleaning up ${installation_dir}..."
     rm -rf "${installation_dir:?}/"* || {
-        echo "ERROR: failed to clean installation directory ${installation_dir}" >&2
-        return 1 # fuck
+        echo "ERROR: failed to clean up ${installation_dir}" >&2
+        return "$ERROR"
     }
 
-    return 0 # ok
+    echo "done!"
+    return "$OK"
 }
 
 function decompress_software() {
@@ -92,15 +95,21 @@ function decompress_software() {
     local zip_file_path="${download_dir}/${zip_file_name}"
     local installation_dir="${SOFTWARE[installation_dir]}"
 
-    manage_zip_decompression "${zip_file_name}" "${zip_file_path}" "${installation_dir}" || return 1 # fuck # fuck
+    if [[ ! -d "${installation_dir}" ]]; then
+        mkdir -p "${installation_dir}"
+        echo "New installation directory created: $installation_dir"
+    fi
 
-    echo "Deleting file $zip_file_path"
+    manage_zip_decompression "${zip_file_name}" "${zip_file_path}" "${installation_dir}" || return "$ERROR"
+
+    echo "Cleaning up ${zip_file_path}..."
     rm -f "${zip_file_path}" || {
-        echo "ERROR: failed to remove ${zip_file_path}" >&2
-        return 1 # fuck
+        echo "ERROR: failed to clean up ${zip_file_path}" >&2
+        return "$ERROR"
     }
 
-    return 0 # ok
+    echo "done!"
+    return "$OK"
 }
 
 function check_software_binary() {
@@ -120,12 +129,11 @@ function make_software_symlink() {
         echo "New symlink directory created: $symlink_dir"
     fi
 
-    echo "Making ${software_name}'s symlink..."
     make_symlink "${source}" "${symlink}"
 }
 
 # delete the download dir only if it was created by this script
-function remove_software_download_dir() {
+function remove_new_download_dir() {
     local download_dir="${SOFTWARE[download_dir]}"
 
     if ((DOWNLOAD_DIR_CREATED)); then
@@ -133,27 +141,44 @@ function remove_software_download_dir() {
 
         rm -rf "${download_dir:?}" || {
             echo "ERROR: failed to delete download directory \"${download_dir}\"" >&2
-            return 1 # fuck
+            return "$ERROR"
         }
     fi
 
-    return 0 # ok
+    return "$OK"
 }
 
-function install_software() {
+function old_install_software() {
     local software_name="${SOFTWARE[binary]^}"
     local latest_version="${SOFTWARE[latest_version]}"
 
-    report_what_to_do && return 0            # ok
-    remove_old_software_version || return 1  # fuck
-    download_software || return 1            # fuck
-    decompress_software || return 1          # fuck
-    check_software_binary || return 1        # fuck
-    make_software_symlink || return 1        # fuck
-    remove_software_download_dir || return 1 # fuck
+    report_what_to_do && return 0           # ok
+    remove_old_software_version || return 1 # fuck
+    download_software || return 1           # fuck
+    decompress_software || return 1         # fuck
+    check_software_binary || return 1       # fuck
+    make_software_symlink || return 1       # fuck
+    remove_new_download_dir || return 1     # fuck
 
     echo "OK: $software_name version $latest_version installed successfully!"
     return 0 # ok
 }
 
-install_software
+function install_software() {
+    download_software || return "$ERROR"
+    decompress_software || return "$ERROR"
+    check_software_binary || return "$ERROR"
+    make_software_symlink || return "$ERROR"
+    remove_new_download_dir || return "$ERROR"
+    return "$OK"
+}
+
+function upgrade_software() {
+    remove_old_software_version || return "$ERROR"
+    download_software || return "$ERROR"
+    decompress_software || return "$ERROR"
+    check_software_binary || return "$ERROR"
+    make_software_symlink || return "$ERROR"
+    remove_new_download_dir || return "$ERROR"
+    return "$OK"
+}
