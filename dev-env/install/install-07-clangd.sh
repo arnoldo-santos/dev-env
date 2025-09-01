@@ -10,6 +10,7 @@ source ~/software/scripts-dev/tool/symlink.sh
 source ~/software/scripts-dev/tool/git-repo.sh
 
 declare -A SOFTWARE=(
+    [name]=Clangd
     [binary]=clangd
     [download_dir]="${HOME}/Downloads"
     [symlink_dir]="${HOME}/.local/bin"
@@ -29,29 +30,27 @@ function get_clangd_installed_version() {
 }
 
 function report_what_to_do() {
-    local binary="${SOFTWARE[binary]}"
-    local software_name="${SOFTWARE[binary]^}"
     local latest_version="${SOFTWARE[latest_version]}"
 
     # software is installed
-    if is_installed "${binary}"; then
+    if is_installed "${SOFTWARE[binary]}"; then
         local installed_version
         installed_version=$(get_clangd_installed_version)
 
         # software is up to date
         if [[ "$installed_version" == "$latest_version" ]]; then
-            echo "OK: ${software_name} v${installed_version} is up to date!"
+            echo "OK: ${SOFTWARE[name]} v${installed_version} is up to date!"
             return "${OPERATION[nothing_to_do]}"
         fi
 
         # software needs upgrade
         echo "New version found: $latest_version"
-        echo "Upgrading $software_name..."
+        echo "Upgrading ${SOFTWARE[name]}..."
         return "${OPERATION[upgrade]}"
     fi
 
     # software is not installed
-    echo "Installing $software_name..."
+    echo "Installing ${SOFTWARE[name]}..."
     return "${OPERATION[install]}"
 }
 
@@ -113,13 +112,10 @@ function decompress_software() {
 }
 
 function check_software_binary() {
-    local software_name="${SOFTWARE[binary]^}"
-    local binary_path="${SOFTWARE[binary_path]}"
-    manage_binary_validation "${software_name}" "${binary_path}"
+    manage_binary_validation "${SOFTWARE[name]}" "${SOFTWARE[binary_path]}"
 }
 
 function make_software_symlink() {
-    local software_name="${SOFTWARE[binary]^}"
     local symlink="${SOFTWARE[symlink]}"
     local symlink_dir="${SOFTWARE[symlink_dir]}"
     local source="${SOFTWARE[binary_path]}"
@@ -148,37 +144,56 @@ function remove_new_download_dir() {
     return "$OK"
 }
 
-function old_install_software() {
-    local software_name="${SOFTWARE[binary]^}"
-    local latest_version="${SOFTWARE[latest_version]}"
-
-    report_what_to_do && return 0           # ok
-    remove_old_software_version || return 1 # fuck
-    download_software || return 1           # fuck
-    decompress_software || return 1         # fuck
-    check_software_binary || return 1       # fuck
-    make_software_symlink || return 1       # fuck
-    remove_new_download_dir || return 1     # fuck
-
-    echo "OK: $software_name version $latest_version installed successfully!"
-    return 0 # ok
-}
-
 function install_software() {
-    download_software || return "$ERROR"
-    decompress_software || return "$ERROR"
-    check_software_binary || return "$ERROR"
-    make_software_symlink || return "$ERROR"
-    remove_new_download_dir || return "$ERROR"
+    download_software &&
+        decompress_software &&
+        check_software_binary &&
+        make_software_symlink &&
+        remove_new_download_dir || return "$ERROR"
     return "$OK"
 }
 
-function upgrade_software() {
-    remove_old_software_version || return "$ERROR"
-    download_software || return "$ERROR"
-    decompress_software || return "$ERROR"
-    check_software_binary || return "$ERROR"
-    make_software_symlink || return "$ERROR"
-    remove_new_download_dir || return "$ERROR"
-    return "$OK"
+# param: action = installation | upgrade
+function manage_software() {
+    local action="$1"
+
+    if install_software; then
+        echo "OK: ${SOFTWARE[name]} $action successfull!"
+        return "$OK"
+    fi
+
+    echo "ERROR: ${SOFTWARE[name]} $action failed" >&2
+    return "$ERROR"
+
 }
+
+function run() {
+    local outcome
+    report_what_to_do
+    outcome=$?
+
+    # software is up to date
+    if ((outcome == OPERATION[nothing_to_do])); then
+        echo "Nothing to do"
+        return "$OK"
+    fi
+
+    # install software
+    if ((outcome == OPERATION[install])); then
+        manage_software "installation" || return "$ERROR"
+        return "$OK"
+    fi
+
+    # upgrade software
+    if ((outcome == OPERATION[upgrade])); then
+        remove_old_software_version || return "$ERROR"
+        manage_software "upgrade" || return "$ERROR"
+        return "$OK"
+    fi
+
+    # handle error
+    echo "ERROR: invalid exit status" >&2
+    return "$ERROR"
+}
+
+run
