@@ -2,7 +2,6 @@
 # file = install-01-nvm.sh
 # nvm: Node Version Manager
 
-set -e # Exit immediately if a command exits with a non-zero status.
 # imports
 source ~/software/scripts-dev/tool/installation.sh
 source ~/software/scripts-dev/tool/git-repo.sh

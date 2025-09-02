@@ -1,20 +1,39 @@
 #!/bin/bash
-# file = install-ghostty.sh
-source ~/software/dev/dev-env/tool/installation.sh
+# file = install-00-ghostty.sh
+source ~/software/scripts-dev/std-tool.sh
+source ~/software/scripts-dev/tool/installation.sh
 
-function install_ghostty() {
-	echo "Instaling Ghostty..."
+declare -A SOFTWARE=(
+	[name]=Ghostty
+	[binary]=ghostty
+)
 
-	if is_installed ghostty; then
-		echo "Ghostty: I'm already installed"
-		return 0
+function install_software() {
+	echo "Checking ${SOFTWARE[name]}..."
+
+	if is_installed "${SOFTWARE[binary]}"; then
+		echo "done!"
+		echo "OK: ${SOFTWARE[name]} is already installed!"
+		return "$OK"
 	fi
+
+	echo "Installing ${SOFTWARE[name]}..."
 
 	# add repository
 	echo 'deb http://download.opensuse.org/repositories/home:/clayrisser:/bookworm/Debian_12/ /' | sudo tee /etc/apt/sources.list.d/home:clayrisser:bookworm.list
 	curl -fsSL https://download.opensuse.org/repositories/home:clayrisser:bookworm/Debian_12/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_clayrisser_bookworm.gpg >/dev/null
+
+	# update repos
 	sudo nala update
-	sudo nala install ghostty
+
+	# install
+	if sudo nala install "${SOFTWARE[binary]}"; then
+		echo "done!"
+		return "$OK"
+	fi
+
+	echo "ERROR: ${SOFTWARE[name]} installation failed" >&2
+	return "$ERROR"
 }
 
-install_ghostty
+install_software

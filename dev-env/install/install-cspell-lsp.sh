@@ -1,6 +1,5 @@
 #!/bin/bash
 # file = build-cspell-lsp.sh
-set -e # Exit immediately if a command exits with a non-zero status.
 source ~/software/dev/dev-env/tool/git-repo.sh
 source ~/software/dev/dev-env/tool/directory.sh
 
