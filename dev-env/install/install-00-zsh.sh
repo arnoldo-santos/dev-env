@@ -2,30 +2,72 @@
 # file = install-00-zsh.sh
 source ~/software/scripts-dev/std-tool.sh
 
-check_zsh() {
+function zsh_is_installed() {
 	zsh --version &>/dev/null
 }
 
-install_zsh() {
+function install_zsh() {
 	sudo nala install zsh
 }
 
-set_zsh_as_default_shell() {
-	chsh -s "$(which zsh)"
+function set_zsh_as_default_shell() {
+	echo "Setting zsh as the default shell..."
+
+	if chsh -s "$(which zsh)"; then
+		echo "Done!"
+		echo "Log out and log back in again to use zsh"
+		return "$OK"
+
+	else
+		echo "ERROR: faliled to set zsh as default shell" >&2
+		return "$ERROR"
+	fi
 }
 
-message() {
-	echo "Log out and log back in again to use zsh"
-}
-# or
-restart_shell() {
-	/bin/zsh
-}
-
-check_shell_update() {
+function shell_is_zsh_0() {
 	[[ "$SHELL" == *"zsh"* ]]
 }
 
-check_shell_version() {
+function shell_is_zsh_1() {
 	$SHELL --version 2>/dev/null | grep -q "zsh"
 }
+
+function shell_is_zsh() {
+	shell_is_zsh_0 || shell_is_zsh_1
+}
+
+function run() {
+	echo "Checking zsh..."
+
+	if zsh_is_installed; then
+		echo "OK: zsh is installed"
+	fi
+
+	if shell_is_zsh; then
+		echo "Done!"
+		return "$OK"
+	fi
+
+	echo "done!"
+	echo "Installing zsh..."
+
+	if install_zsh; then
+		echo "done!"
+
+		if zsh_is_installed; then
+			echo "OK: zsh installation successfull!"
+		else
+			echo "ERROR: zsh checking failed" >&2
+			return "$ERROR"
+		fi
+
+	else
+		echo "ERROR: zsh installation failed" >&2
+		return "$ERROR"
+	fi
+
+	set_zsh_as_default_shell || exit "$ERROR"
+	exit "$OK"
+}
+
+run

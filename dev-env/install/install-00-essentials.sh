@@ -71,8 +71,8 @@ function install_clipboard() {
     return "$OK"
 }
 
-function install_programs() {
-    echo "Installing software..."
+function install_essentials() {
+    echo "Installing essential software..."
 
     if is_installed nala; then
         sudo nala update && sudo nala upgrade
@@ -116,4 +116,4 @@ function install_programs() {
     return "$OK"
 }
 
-install_programs && reload_zsh_config
+install_essentials && reload_zsh_config
