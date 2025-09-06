@@ -115,16 +115,17 @@ function binary_is_up_to_date() {
     local source_dir="$1"
     local commit_file="$2"
 
-    local installed_commit
+    local old_commit
     local latest_commit
 
     if [[ -f "$commit_file" ]]; then
-        installed_commit=$(<"$commit_file")
+        old_commit=$(<"$commit_file")
     else
-        return "$NO" # commit file does not exist, so consider it not up-to-date
+        # commit file does not exist, so consider it not up-to-date
+        return "$NO"
     fi
 
     latest_commit="$(cd "$source_dir" && git rev-parse HEAD)"
 
-    [[ "$installed_commit" == "$latest_commit" ]]
+    [[ "$old_commit" == "$latest_commit" ]]
 }
