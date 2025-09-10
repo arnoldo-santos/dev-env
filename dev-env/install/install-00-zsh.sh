@@ -1,6 +1,9 @@
 #!/bin/bash
 # file = install-00-zsh.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 function zsh_is_installed() {
 	zsh --version &>/dev/null

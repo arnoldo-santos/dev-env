@@ -1,11 +1,13 @@
 #!/bin/bash
 # file = install-04-go.sh
 
-source ~/software/scripts-dev/tool/version.sh
-source ~/software/scripts-dev/tool/symlink.sh
-source ~/software/scripts-dev/tool/installation.sh
-source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/std-tool.sh
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/version.sh
+source "${ROOT_DIR}"/tool/symlink.sh
+source "${ROOT_DIR}"/tool/installation.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
+source "${ROOT_DIR}"/tool/std.sh
 
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 

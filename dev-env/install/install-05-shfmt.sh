@@ -2,15 +2,16 @@
 # file = install-shfmt.sh
 # shfmt: to format scripts
 
-set -e # Exit immediately if a command exits with a non-zero status.
 THIS_SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # imports
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/symlink.sh
-source ~/software/scripts-dev/tool/version.sh
-source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/tool/installation.sh
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/symlink.sh
+source "${ROOT_DIR}"/tool/version.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
+source "${ROOT_DIR}"/tool/installation.sh
 
 # shfmt's data
 declare -A SOFTWARE=(

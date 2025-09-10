@@ -1,7 +1,10 @@
 #!/bin/bash
 # file = install-00-ghostty.sh
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/installation.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/installation.sh
 
 declare -A SOFTWARE=(
 	[name]=Ghostty
@@ -35,7 +38,7 @@ EOF
 
 	# install
 	if sudo nala install "${SOFTWARE[binary]}"; then
-		echo "done!"
+		echo "Done!"
 		return "$OK"
 	fi
 

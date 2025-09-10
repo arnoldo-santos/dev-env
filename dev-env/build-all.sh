@@ -1,13 +1,15 @@
 #!/bin/bash
 # file = build-all.sh
 
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # import
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/bash-files.sh
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/bash-files.sh
 
 function build_all() {
     local scripts
-    scripts=("${HOME}"/software/scripts-dev/dev-env/build/build-*.sh)
+    scripts=("${ROOT_DIR}"/dev-env/build/build-*.sh)
 
     echo "Building software..."
 

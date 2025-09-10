@@ -1,11 +1,13 @@
 #!/bin/bash
 # file = install-06-black.sh
 
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # imports
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/version.sh
-source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/tool/installation.sh
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/version.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
+source "${ROOT_DIR}"/tool/installation.sh
 
 declare -A SOFTWARE=(
     [name]="Black (Python Code Formatter)"

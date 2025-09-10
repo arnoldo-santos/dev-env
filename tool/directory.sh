@@ -1,6 +1,9 @@
 #!/bin/bash
 # file = tool/directory.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 # Goal = check if a path is a directory
 # Usage = function <path>

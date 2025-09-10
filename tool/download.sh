@@ -1,6 +1,9 @@
 #!/bin/bash
 # file = tool/download.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 # Goal: download a file using the curl command
 # Parameters {

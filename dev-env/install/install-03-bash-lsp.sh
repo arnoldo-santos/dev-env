@@ -1,11 +1,11 @@
 #!/bin/bash
 # file = install-bash-lsp.sh
 
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/dev-env/tool/installation.sh
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/installation.sh
 #
-# Set strict mode
-set -euo pipefail
 
 declare -A SOFTWARE=(
     [name]="Bash Language Server"

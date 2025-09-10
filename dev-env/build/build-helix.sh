@@ -1,10 +1,12 @@
 #!/bin/bash
 # file = build-helix.sh
 
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/symlink.sh
-source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/tool/dependency.sh
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/symlink.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
+source "${ROOT_DIR}"/tool/dependency.sh
 
 declare -A SOFTWARE=(
     [name]=helix
@@ -125,16 +127,10 @@ function build_software() {
     # binary symlink
     local source="${SOFTWARE[binary_installed]}"
     local symlink="${SOFTWARE[symlink]}"
-    # [[ -d "${SOFTWARE[symlink_dir]}" ]] || mkdir -p "${SOFTWARE[symlink_dir]}"
-    # make_symlink "${source}" "${symlink}" || return "$ERROR"
     manage_symlink "${source}" "${symlink}" || return "$ERROR"
     # runtime symlink
     source="${SOFTWARE[runtime_src]}"
     symlink="${SOFTWARE[runtime_lnk]}"
-    # make_symlink "${source}" "${symlink}" false "-Tsf" || {
-    #     echo "ERROR: runtime symlink failed" >&2
-    #     return "$ERROR"
-    # }
     manage_symlink "${source}" "${symlink}" false "-Tsf" || return "$ERROR"
 
     echo "OK: ${prog_name} installed successfully!"

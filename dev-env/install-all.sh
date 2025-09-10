@@ -1,15 +1,15 @@
 #!/bin/bash
 # file = install-all.sh
 
-# Set strict mode
-set -euo pipefail
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # import
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/bash-files.sh
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/bash-files.sh
 
 function install_all() {
     local scripts
-    scripts=("${HOME}"/software/scripts-dev/dev-env/install/install-*.sh)
+    scripts=("${ROOT_DIR}"/dev-env/install/install-*.sh)
 
     echo "Installing software..."
 

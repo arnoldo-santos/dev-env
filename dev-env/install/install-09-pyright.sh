@@ -1,6 +1,9 @@
 #!/bin/bash
 # file: install-09-pyright.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 declare -A SOFTWARE=(
     [name]=PyRight

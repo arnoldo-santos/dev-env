@@ -1,9 +1,11 @@
 #!/bin/bash
 # file = install-nodejs.sh
 
-set -e
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/installation.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/installation.sh
 
 function add_nodejs_family_binaries_to_zshrc() {
     local version

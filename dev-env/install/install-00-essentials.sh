@@ -1,12 +1,13 @@
 #!/bin/bash
 # file: install-essentials.sh
 
-# Set strict mode
-set -euo pipefail
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # import
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/installation.sh
-source ~/software/scripts-dev/tool/bash-files.sh
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/installation.sh
+source "${ROOT_DIR}"/tool/bash-files.sh
 
 function add_rust_reload_code_to_zshrc() {
     # Define the lines to add

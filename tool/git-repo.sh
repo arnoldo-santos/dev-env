@@ -1,7 +1,10 @@
 #!/bin/bash
 # file = tool/git-repo.sh
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/directory.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/directory.sh
 
 function is_valid_git_url() {
     local url="$1"

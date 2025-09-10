@@ -1,7 +1,10 @@
 #!/bin/bash
 # file = tool/update-path.sh
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/symlink.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/bash-files.sh
 
 # colors
 readonly GREEN="\033[32m"

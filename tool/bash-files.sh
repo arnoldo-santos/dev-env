@@ -1,6 +1,9 @@
 #!/bin/bash
 # file = tool/bash-files.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 function is_file_name_ok() {
     local file_name="$1"

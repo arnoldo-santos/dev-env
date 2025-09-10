@@ -1,6 +1,9 @@
 #!/bin/bash
 # file = tool/decompress.sh
-source ~/software/scripts-dev/std-tool.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
 
 # Goal: decompress a zip file from 'source' to 'destination'
 # Parameters {

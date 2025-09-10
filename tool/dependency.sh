@@ -1,8 +1,10 @@
 #!/bin/bash
 # file = tool/dependency.sh
-set -e # Exit immediately if a command exits with a non-zero status.
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/installation.sh
+
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/check.sh
 
 # set the default package manager
 PACKAGE_MANAGER=${PACKAGE_MANAGER:-nala}

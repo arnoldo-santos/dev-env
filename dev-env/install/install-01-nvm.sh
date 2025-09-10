@@ -2,10 +2,12 @@
 # file = install-01-nvm.sh
 # nvm: Node Version Manager
 
+# root directory
+ROOT_DIR="$HOME/software/scripts"
 # imports
-source ~/software/scripts-dev/tool/installation.sh
-source ~/software/scripts-dev/tool/git-repo.sh
-source ~/software/scripts-dev/std-tool.sh
+source "${ROOT_DIR}"/tool/installation.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
+source "${ROOT_DIR}"/tool/std.sh
 
 declare -A SOFTWARE=(
     [id]=nvm

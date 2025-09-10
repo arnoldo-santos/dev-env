@@ -1,13 +1,15 @@
 #!/bin/bash
 # file = install-07-clangd.sh
 
-source ~/software/scripts-dev/std-tool.sh
-source ~/software/scripts-dev/tool/download.sh
-source ~/software/scripts-dev/tool/decompress.sh
-source ~/software/scripts-dev/tool/binary.sh
-source ~/software/scripts-dev/tool/installation.sh
-source ~/software/scripts-dev/tool/symlink.sh
-source ~/software/scripts-dev/tool/git-repo.sh
+# root directory
+ROOT_DIR="$HOME/software/scripts"
+source "${ROOT_DIR}"/tool/std.sh
+source "${ROOT_DIR}"/tool/download.sh
+source "${ROOT_DIR}"/tool/decompress.sh
+source "${ROOT_DIR}"/tool/binary.sh
+source "${ROOT_DIR}"/tool/installation.sh
+source "${ROOT_DIR}"/tool/symlink.sh
+source "${ROOT_DIR}"/tool/git-repo.sh
 
 declare -A SOFTWARE=(
     [name]=Clangd
