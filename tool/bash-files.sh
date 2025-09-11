@@ -233,21 +233,21 @@ function run_scripts() {
     local scripts=("$@")
 
     if script_array_is_empty "${scripts[@]}"; then
-        echo "ERROR: script list is empty" >&2
+        print_error "script list is empty"
         return "${ERROR}"
     fi
 
     if ! script_array_only_has_bash_files "${scripts[@]}"; then
-        echo "ERROR: script list has non-bash files" >&2
+        print_error "script list has non-bash files"
         return "${ERROR}"
     fi
 
     for script in "${scripts[@]}"; do
         echo
-        echo "Running '${script}'..."
+        print_status "Running '${script}'..."
 
         if run_script "${script}"; then
-            echo "OK: '${script}' executed successfully!"
+            print_success "'${script}' executed successfully!"
             echo
         # else
         #     echo "ERROR: script execution failed at '${script}'" >&2

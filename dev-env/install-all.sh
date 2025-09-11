@@ -14,10 +14,10 @@ function install_all() {
     echo "Installing software..."
 
     if run_scripts "${scripts[@]}"; then
-        echo "OK: all software installed successfully!"
+        print_success "all software installed successfully!"
         return "$OK"
     else
-        echo "ERROR: failed to install software" >&2
+        print_error "failed to install software"
         return "$ERROR"
     fi
 }
