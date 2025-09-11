@@ -28,10 +28,12 @@ function check_dirs() {
     local repo_dir="${SOFTWARE[repo_dir]}"
     local installation_dir="${SOFTWARE[installation_dir]}"
     local symlink_dir="${SOFTWARE[symlink_dir]}"
+    local cfg_dir="${SOFTWARE[config_dir]}"
 
     [[ -d "${repo_dir}" ]] || mkdir -p "${repo_dir}"
     [[ -d "${installation_dir}" ]] || mkdir -p "${installation_dir}"
     [[ -d "${symlink_dir}" ]] || mkdir -p "${symlink_dir}"
+    [[ -d "${cfg_dir}" ]] || mkdir -p "${cfg_dir}"
 }
 
 # check the commit history file
