@@ -39,6 +39,15 @@ function shell_is_zsh() {
 	shell_is_zsh_0 || shell_is_zsh_1
 }
 
+# install Oh My Zsh
+function install_ohmyzsh() {
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+}
+
+function install_zsh_autosuggestions() {
+	git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+}
+
 function run() {
 	echo "Checking zsh..."
 
@@ -71,6 +80,14 @@ function run() {
 
 	set_zsh_as_default_shell || exit "$ERROR"
 	exit "$OK"
+
+	if set_zsh_as_default_shell; then
+ 		install_ohmyzsh || return "$ERROR"
+		install_zsh_autosuggestions || return "$ERROR"
+		exit "$OK"
+	else
+		exit "$ERROR"
+	fi
 }
 
 run

@@ -21,6 +21,8 @@ SOFTWARE[binary_src]="${SOFTWARE[repo_dir]}/target/release/${SOFTWARE[binary]}"
 SOFTWARE[binary_installed]="${SOFTWARE[installation_dir]}/${SOFTWARE[binary]}"
 SOFTWARE[symlink_dir]="${HOME}/.local/bin"
 SOFTWARE[symlink]="${SOFTWARE[symlink_dir]}/${SOFTWARE[binary]}"
+SOFTWARE[sys_path]="/usr/local/bin"
+SOFTWARE[sys_smlk]="${SOFTWARE[sys_path]}/${SOFTWARE[binary]}"
 SOFTWARE[git_repo_url]="https://github.com/${SOFTWARE[name]}-editor/${SOFTWARE[name]}.git"
 
 # check the necessary directories for the installation
@@ -133,7 +135,13 @@ function build_software() {
     # runtime symlink
     source="${SOFTWARE[runtime_src]}"
     symlink="${SOFTWARE[runtime_lnk]}"
+    # `false` means it doesn't use `sudo`
     manage_symlink "${source}" "${symlink}" false "-Tsf" || return "$ERROR"
+    # system symlink
+    source="${SOFTWARE[symlink]}"
+    symlink="${SOFTWARE[sys_smlk]}"
+    # `true` means it use `sudo`
+    manage_symlink "${source}" "${symlink}" true "-s" || return "$ERROR"
 
     echo "OK: ${prog_name} installed successfully!"
     echo "Done!"
