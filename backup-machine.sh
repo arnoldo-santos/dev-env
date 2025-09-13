@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # root directory
 ROOT_DIR="$HOME/software/scripts"
 source "${ROOT_DIR}"/tool/std.sh
@@ -26,10 +26,17 @@ DIRS_TO_BACKUP=(
 	".config/zed"
 )
 
+FILES_TO_BACKUP=(
+	".zshrc"
+	".oh-my-zsh/custom/aliases.zsh"
+	"etc/apt/sources.list"
+)
+
 # function to backup a directory
-function backup_directory() {
-	local source_dir="$HOME/$1"
-	local dest_dir="$BACKUP_PATH/$1"
+function backup_dir() {
+	local source_dir="$1"
+	local decorator="$2"
+	local dest_dir="$3"
 
 	if [[ -d "$source_dir" ]]; then
 		print_status "Backing up: ${source_dir}..."
@@ -43,7 +50,7 @@ function backup_directory() {
 			print_success "done!"
 		else
 			print_error "Failed to backup: $1"
-			return 1
+			return "$ERROR"
 		fi
 	else
 		print_warning "Source directory does not exist, skipping: $source_dir"
@@ -52,8 +59,39 @@ function backup_directory() {
 
 function backup_directories() {
 	for dir in "${DIRS_TO_BACKUP[@]}"; do
-		backup_directory "$dir"
+		backup_dir "$HOME/$dir" to "$BACKUP_PATH/$dir"
 		echo # Add blank line for readability
+	done
+}
+
+function backup_file() {
+	local source_file="$1"
+	local decorator="$2"
+	local dest_file="$3"
+
+	if [[ -f "$source_file" ]]; then
+		print_status "Backing up: ${source_file}..."
+
+		[[ -f "$dest_file" ]] || {
+			mkdir -p "$(dirname "$dest_file")"
+			touch "$dest_file"
+		}
+
+		if rsync -av --progress "$source_file" "$dest_file"; then
+			print_success "done!"
+		else
+			print_error "Failed to backup: $1"
+			return "$ERROR"
+		fi
+	else
+		print_warning "Source file does not exist, skipping: $source_file"
+	fi
+}
+
+function backup_files() {
+	for file in "${FILES_TO_BACKUP[@]}"; do
+		# backup_file
+		echo # blank line for readability
 	done
 }
 

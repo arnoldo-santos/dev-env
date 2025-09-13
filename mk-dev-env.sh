@@ -8,6 +8,16 @@ ROOT_DIR="$HOME/software/scripts"
 # import
 source "${ROOT_DIR}"/tool/std.sh
 
+# check internet connectivity
+function check_internet_connection() {
+    if ping -c 1 -W 3 8.8.8.8 &>/dev/null; then
+        echo "✓ internet connection OK"
+        return "$OK"
+    fi
+    print_error "✗ No internet connection"
+    return "$ERROR"
+}
+
 function make_dev_env() {
 
     # install essential software
@@ -16,8 +26,13 @@ function make_dev_env() {
     # build software
     bash "$ROOT_DIR"/dev-env/build-all.sh || return "$ERROR"
 
-    echo "OK: Development Environment successfull!"
+    print_success "Development Environment successfull!"
     return "$OK"
 }
 
-make_dev_env
+function run() {
+    check_internet_connection || exit "$ERROR"
+    make_dev_env
+}
+
+run

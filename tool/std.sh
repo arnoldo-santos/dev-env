@@ -41,7 +41,13 @@ function restart_zsh() {
 }
 
 function reload_zsh_config() {
-	zsh -c "source ~/.zshenv && source ~/.zshrc"
+	if zsh -c "source ~/.zshenv && source ~/.zshrc"; then
+		echo "OK: ~/.zshrc reloaded"
+		return "$OK"
+	else
+		echo "ERROR: ~/.zshrc reload failed"
+		return "$ERROR"
+	fi
 }
 
 function refresh_zsh() {
