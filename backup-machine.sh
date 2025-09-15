@@ -13,7 +13,7 @@ if [ $# -eq 0 ]; then
 fi
 BACKUP_PATH="$1"
 
-# Directories to backup (relative to home directory)
+# directories to backup (relative to home directory)
 DIRS_TO_BACKUP=(
 	"data"
 	"software/scripts"
@@ -26,9 +26,12 @@ DIRS_TO_BACKUP=(
 	".config/zed"
 )
 
+# files to backup
 FILES_TO_BACKUP=(
+	# relative to home directory
 	".zshrc"
 	".oh-my-zsh/custom/aliases.zsh"
+	# relative to root directory
 	"etc/apt/sources.list"
 )
 
@@ -41,15 +44,16 @@ function backup_dir() {
 	if [[ -d "$source_dir" ]]; then
 		print_status "Backing up: ${source_dir}..."
 
-		# Create destination directory structure
+		# check destination directory
 		# mkdir -p "$(dirname "$dest_dir")"
 		[[ -d "$dest_dir" ]] || mkdir -p "$dest_dir"
 
-		# Use rsync for efficient backup with progress
+		# backup directory
 		if rsync -av --progress "$source_dir/" "$dest_dir/"; then
-			print_success "done!"
+			print_success "$source_dir backed up"
+			return "$OK"
 		else
-			print_error "Failed to backup: $1"
+			print_error "Failed to backup: $source_dir"
 			return "$ERROR"
 		fi
 	else
@@ -60,7 +64,7 @@ function backup_dir() {
 function backup_directories() {
 	for dir in "${DIRS_TO_BACKUP[@]}"; do
 		backup_dir "$HOME/$dir" to "$BACKUP_PATH/$dir"
-		echo # Add blank line for readability
+		echo # blank line for readability
 	done
 }
 
@@ -72,15 +76,18 @@ function backup_file() {
 	if [[ -f "$source_file" ]]; then
 		print_status "Backing up: ${source_file}..."
 
+		# check destination file
 		[[ -f "$dest_file" ]] || {
 			mkdir -p "$(dirname "$dest_file")"
 			touch "$dest_file"
 		}
 
+		# backup file
 		if rsync -av --progress "$source_file" "$dest_file"; then
-			print_success "done!"
+			print_success "$source_file backed up"
+			return "$OK"
 		else
-			print_error "Failed to backup: $1"
+			print_error "Failed to backup: $source_file"
 			return "$ERROR"
 		fi
 	else
