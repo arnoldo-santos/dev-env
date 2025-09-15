@@ -14,7 +14,7 @@ fi
 BACKUP_PATH="$1"
 
 # directories to backup (relative to home directory)
-DIRS_TO_BACKUP=(
+DIRS_TO_BACKUP_FROM_HOME=(
 	"data"
 	"software/scripts"
 	"Music"
@@ -26,80 +26,80 @@ DIRS_TO_BACKUP=(
 	".config/zed"
 )
 
-# files to backup
-FILES_TO_BACKUP=(
-	# relative to home directory
+# files to backup (relative to home directory)
+FILES_TO_BACKUP_FROM_HOME=(
 	".zshrc"
 	".oh-my-zsh/custom/aliases.zsh"
-	# relative to root directory
+)
+
+# files to backup (relative to root directory)
+FILES_TO_BACKUP_FROM_ROOT=(
 	"etc/apt/sources.list"
 )
 
-# function to backup a directory
+# backup a directory
 function backup_dir() {
-	local source_dir="$1"
+	# source directory
+	local src_dir="$1"
+	# just a decorator
 	local decorator="$2"
+	# destination directory
 	local dest_dir="$3"
 
-	if [[ -d "$source_dir" ]]; then
-		print_status "Backing up: ${source_dir}..."
-
-		# check destination directory
-		# mkdir -p "$(dirname "$dest_dir")"
-		[[ -d "$dest_dir" ]] || mkdir -p "$dest_dir"
-
-		# backup directory
-		if rsync -av --progress "$source_dir/" "$dest_dir/"; then
-			print_success "$source_dir backed up"
-			return "$OK"
-		else
-			print_error "Failed to backup: $source_dir"
-			return "$ERROR"
-		fi
-	else
-		print_warning "Source directory does not exist, skipping: $source_dir"
+	# skip the source dir if it doesn't exists
+	if [[ ! -d "$src_dir" ]]; then
+		print_warning "Source directory does not exist, skipping: $src_dir"
+		return
 	fi
+
+	print_status "Backing up: ${src_dir}..."
+
+	# check destination directory
+	[[ -d "$dest_dir" ]] || mkdir -p "$dest_dir"
+
+	# backup directory
+	if rsync -av --progress "$src_dir/" "$dest_dir/"; then
+		print_success "$src_dir backed up"
+		return "$OK"
+	fi
+
+	# backup failed
+	print_error "Failed to backup: $src_dir"
+	return "$ERROR"
 }
 
-function backup_directories() {
-	for dir in "${DIRS_TO_BACKUP[@]}"; do
-		backup_dir "$HOME/$dir" to "$BACKUP_PATH/$dir"
-		echo # blank line for readability
-	done
-}
-
+# backup a file
 function backup_file() {
-	local source_file="$1"
+	# source file
+	local src_file="$1"
+	# just a decorator
 	local decorator="$2"
+	# destination file
 	local dest_file="$3"
 
-	if [[ -f "$source_file" ]]; then
-		print_status "Backing up: ${source_file}..."
-
-		# check destination file
-		[[ -f "$dest_file" ]] || {
-			mkdir -p "$(dirname "$dest_file")"
-			touch "$dest_file"
-		}
-
-		# backup file
-		if rsync -av --progress "$source_file" "$dest_file"; then
-			print_success "$source_file backed up"
-			return "$OK"
-		else
-			print_error "Failed to backup: $source_file"
-			return "$ERROR"
-		fi
-	else
-		print_warning "Source file does not exist, skipping: $source_file"
+	# skip the source file if it doesn't exists
+	if [[ ! -f "$src_file" ]]; then
+		print_warning "Source file does not exist, skipping: $src_file"
+		return
 	fi
-}
 
-function backup_files() {
-	for file in "${FILES_TO_BACKUP[@]}"; do
-		# backup_file
-		echo # blank line for readability
-	done
+	print_status "Backing up: ${src_file}..."
+
+	# check destination file
+	[[ -f "$dest_file" ]] || {
+		mkdir -p "$(dirname "$dest_file")"
+		touch "$dest_file"
+	}
+
+	# backup file
+	if rsync -av --progress "$src_file" "$dest_file"; then
+		print_success "$src_file backed up"
+		return "$OK"
+	fi
+
+	# backup failed
+	print_error "Failed to backup: $src_file"
+	return "$ERROR"
 }
 
 # Create a backup info file
@@ -116,7 +116,7 @@ User: $(whoami)
 Directories Backed Up:
 EOF
 
-	for dir in "${DIRS_TO_BACKUP[@]}"; do
+	for dir in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
 		source_dir="$HOME/$dir"
 		if [ -d "$source_dir" ]; then
 			size=$(du -sh "$source_dir" 2>/dev/null | cut -f1)
@@ -127,27 +127,34 @@ EOF
 	done
 }
 
-print_status "Starting laptop backup process..."
-print_status "Backup destination: $BACKUP_PATH"
+function backup_data() {
+	print_status "Starting backup process..."
+	print_status "Backup destination: $BACKUP_PATH"
+	# check the backup path
+	[[ -d "$BACKUP_PATH" ]] || mkdir -p "$BACKUP_PATH"
 
-[[ -d "$BACKUP_PATH" ]] || mkdir -p "$BACKUP_PATH"
+	# backup dorectories from $HOME
+	for dir in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
+		backup_dir "$HOME/$dir" to "$BACKUP_PATH/$dir"
+		echo # blank line for readability
+	done
 
-backup_directories
-file_info
+	# backup files from $HOME
+	for file in "${FILES_TO_BACKUP_FROM_HOME[@]}"; do
+		backup_file "$HOME/$file" to "$BACKUP_PATH/$file"
+		echo # blank line for readability
+	done
 
-#------------------------------------------------------------------------------
-# mkdir -p /media/jaw/voltu-V/backup/laptop
+	# backup files from root
+	for file in "${FILES_TO_BACKUP_FROM_ROOT[@]}"; do
+		backup_file "/$file" to "$BACKUP_PATH/$file"
+		echo # blank line for readability
+	done
+}
 
-# # Backup main directories
-# rsync -av ~/data/ /media/jaw/voltu-V/backup/laptop/data/
-# rsync -av ~/software/scripts/ /media/jaw/voltu-V/backup/laptop/software/scripts/
-# rsync -av ~/Music/ /media/jaw/voltu-V/backup/laptop/Music/
-# rsync -av ~/Pictures/ /media/jaw/voltu-V/backup/laptop/Pictures/
-# rsync -av ~/tmp/ /media/jaw/voltu-V/backup/laptop/tmp/
+function run() {
+	backup_data
+	file_info
+}
 
-# # Backup specific config directories
-# rsync -av ~/.config/black/ /media/jaw/voltu-V/backup/laptop/.config/black/
-# rsync -av ~/.config/ghostty/ /media/jaw/voltu-V/backup/laptop/.config/ghostty/
-# rsync -av ~/.config/helix/ /media/jaw/voltu-V/backup/laptop/.config/helix/
-# rsync -av ~/.config/zed/ /media/jaw/voltu-V/backup/laptop/.config/zed/
-#------------------------------------------------------------------------------
+run

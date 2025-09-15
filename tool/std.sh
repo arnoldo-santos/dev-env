@@ -29,7 +29,7 @@ function print_success() {
 }
 
 function print_warning() {
-	echo -e "${YELLOW}[WARNING]${NC} $1"
+	echo -e "${YELLOW}[WARNING]${NC} $1" >&2
 }
 
 function print_error() {
