@@ -102,31 +102,6 @@ function backup_file() {
 	return "$ERROR"
 }
 
-# Create a backup info file
-function file_info() {
-	local info_file="$BACKUP_PATH/backup_info.txt"
-	cat >"$info_file" <<EOF
-Laptop Backup Information
-========================
-Backup Date: $(date)
-Backup Path: $BACKUP_DIR
-Source Machine: $(hostname)
-User: $(whoami)
-
-Directories Backed Up:
-EOF
-
-	for dir in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
-		source_dir="$HOME/$dir"
-		if [ -d "$source_dir" ]; then
-			size=$(du -sh "$source_dir" 2>/dev/null | cut -f1)
-			echo "- $dir ($size)" >>"$info_file"
-		else
-			echo "- $dir (SKIPPED - does not exist)" >>"$info_file"
-		fi
-	done
-}
-
 function backup_data() {
 	print_status "Starting backup process..."
 	print_status "Backup destination: $BACKUP_PATH"
@@ -134,8 +109,8 @@ function backup_data() {
 	[[ -d "$BACKUP_PATH" ]] || mkdir -p "$BACKUP_PATH"
 
 	# backup dorectories from $HOME
-	for dir in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
-		backup_dir "$HOME/$dir" to "$BACKUP_PATH/$dir"
+	for file in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
+		backup_dir "$HOME/$file" to "$BACKUP_PATH/$file"
 		echo # blank line for readability
 	done
 
@@ -152,9 +127,86 @@ function backup_data() {
 	done
 }
 
+# write directories backed up into the info file
+function dirs_to_info_file() {
+	local info_file="$1"
+
+	cat >"$info_file" <<EOF
+Directories Backed Up:
+----------------------
+EOF
+
+	for file in "${DIRS_TO_BACKUP_FROM_HOME[@]}"; do
+		src_file="$HOME/$file"
+		if [[ -d "$src_file" ]]; then
+			size=$(du -sh "$src_file" 2>/dev/null | cut -f1)
+			echo "- $file ($size)" >>"$info_file"
+		else
+			echo "- $file (SKIPPED - does not exist)" >>"$info_file"
+		fi
+	done
+
+	echo -e "\n" >>"$info_file"
+}
+
+# write files backed up into the info file
+function files_to_info_file() {
+	local info_file="$1"
+
+	cat >"$info_file" <<EOF
+Files Backed Up:
+----------------
+EOF
+
+	for file in "${FILES_TO_BACKUP_FROM_HOME[@]}"; do
+		src_file="$HOME/$file"
+		if [[ -f "$src_file" ]]; then
+			size=$(du -sh "$src_file" 2>/dev/null | cut -f1)
+			echo "- $file ($size)" >>"$info_file"
+		else
+			echo "- $file (SKIPPED - does not exist)" >>"$info_file"
+		fi
+	done
+
+	echo -e "\n" >>"$info_file"
+
+	for file in "${FILES_TO_BACKUP_FROM_ROOT[@]}"; do
+		src_file="/$file"
+		if [[ -f "$src_file" ]]; then
+			size=$(du -sh "$src_file" 2>/dev/null | cut -f1)
+			echo "- $file ($size)" >>"$info_file"
+		else
+			echo "- $file (SKIPPED - does not exist)" >>"$info_file"
+		fi
+	done
+
+	echo -e "\n" >>"$info_file"
+}
+
+# create a backup info file
+function make_info_file() {
+	local info_file="$1"
+
+	cat >"$info_file" <<EOF
+Backup Information
+==================
+Date: $(date)
+Path: $BACKUP_PATH
+Source Machine: $(hostname)
+User: $(whoami)
+
+EOF
+
+	dirs_to_info_file "$info_file"
+	files_to_info_file "$info_file"
+}
+
 function run() {
+	local info_file="$BACKUP_PATH/backup_info.txt"
+
 	backup_data
-	file_info
+	touch "$info_file"
+	make_info_file "$info_file"
 }
 
 run
