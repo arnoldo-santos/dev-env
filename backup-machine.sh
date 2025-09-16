@@ -201,8 +201,23 @@ EOF
 	files_to_info_file "$info_file"
 }
 
+function check_rsync() {
+	if is_installed rsync; then
+		return "$OK"
+	fi
+
+	if sudo nala install rsync; then
+		return "$OK"
+	fi
+
+	print_error "'rsync' failed"
+	return "$ERROR"
+}
+
 function run() {
 	local info_file="$BACKUP_PATH/backup_info.txt"
+
+	check_rsync || return "$ERROR"
 
 	backup_data
 	touch "$info_file"
