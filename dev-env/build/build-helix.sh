@@ -24,6 +24,7 @@ SOFTWARE[symlink]="${SOFTWARE[symlink_dir]}/${SOFTWARE[binary]}"
 SOFTWARE[sys_path]="/usr/local/bin"
 SOFTWARE[sys_smlk]="${SOFTWARE[sys_path]}/${SOFTWARE[binary]}"
 SOFTWARE[git_repo_url]="https://github.com/${SOFTWARE[name]}-editor/${SOFTWARE[name]}.git"
+SOFTWARE[commit_file]="${SOFTWARE[installation_dir]}/COMMIT_HISTORY"
 
 # check the necessary directories for the installation
 function check_dirs() {
@@ -40,14 +41,14 @@ function check_dirs() {
 
 # check the commit history file
 function check_commit_file() {
-    local commit_file="${SOFTWARE[installation_dir]}/COMMIT_HISTORY"
+    local commit_file="${SOFTWARE[commit_file]}"
     [[ -f "${commit_file}" ]] || touch "${commit_file}"
 }
 
 # check the binary status
 function check_binary() {
     local repo_dir="${SOFTWARE[repo_dir]}"
-    local commit_file="${SOFTWARE[installation_dir]}/COMMIT_HISTORY"
+    local commit_file="${SOFTWARE[commit_file]}"
 
     if binary_is_up_to_date "${repo_dir}" "${commit_file}"; then
         echo "OK: ${SOFTWARE[name]^} is already up-to-date"
@@ -75,9 +76,9 @@ function compile_src() {
     return "$ERROR"
 }
 
-# store the latest commit hash in the installation directory
+# store the latest commit hash at the installation directory in the commit file
 function update_commit_file() {
-    local commit_file="${SOFTWARE[installation_dir]}/COMMIT_HISTORY"
+    local commit_file="${SOFTWARE[commit_file]}"
     git rev-parse HEAD >"${commit_file}"
 }
 
@@ -105,17 +106,16 @@ function manage_symlink() {
 }
 
 function build_software() {
-
-    local prog_name="${SOFTWARE[name]^}"
+    local software_name="${SOFTWARE[name]^}"
     local repo_url="${SOFTWARE[git_repo_url]}"
     local repo_dir="${SOFTWARE[repo_dir]}"
     local installation_dir="${SOFTWARE[installation_dir]}"
 
-    echo "Building ${prog_name}..."
+    echo "Building ${software_name}..."
     # checks the necessary directories for the installation
     check_dirs
     # clone the repository
-    manage_repo_cloning "${prog_name}" "${repo_url}" "${repo_dir}" || return "$ERROR"
+    manage_repo_cloning "${software_name}" "${repo_url}" "${repo_dir}" || return "$ERROR"
     # checks the commit history file
     check_commit_file
     # check the binary status
@@ -143,7 +143,7 @@ function build_software() {
     # `true` means it use `sudo`
     manage_symlink "${source}" "${symlink}" true "-s" || return "$ERROR"
 
-    echo "OK: ${prog_name} installed successfully!"
+    echo "OK: ${software_name} installed successfully!"
     echo "Done!"
     return "$OK"
 }

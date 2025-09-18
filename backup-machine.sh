@@ -202,11 +202,16 @@ EOF
 }
 
 function check_rsync() {
+	echo "Checking 'rsync'..."
 	if is_installed rsync; then
+		echo "done!"
 		return "$OK"
 	fi
+	echo "done!"
 
+	echo "Installing 'rsync'..."
 	if sudo nala install rsync; then
+		echo "done!"
 		return "$OK"
 	fi
 
