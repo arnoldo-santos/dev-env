@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 # root directory
 ROOT_DIR="$HOME/software/scripts"
 source "${ROOT_DIR}"/tool/std.sh
