@@ -42,20 +42,20 @@ function restart_zsh() {
 
 function reload_zsh_config() {
 	if zsh -c "source ~/.zshenv && source ~/.zshrc"; then
-		echo "OK: ~/.zshrc reloaded"
-		return "$OK"
+		return $OK
 	else
-		echo "ERROR: ~/.zshrc reload failed"
-		return "$ERROR"
+		return $ERROR
 	fi
 }
 
 function refresh_zsh() {
-	if ! reload_zsh_config; then
-		echo "ERROR: failed to reload zsh config" >&2
-		return "$ERROR"
+	if reload_zsh_config; then
+		echo "OK: zsh config reloaded"
+		return $OK
 	fi
-	return "$OK"
+
+	echo "ERROR: failed to reload zsh config" >&2
+	return $ERROR
 }
 
 # aliases to echo
