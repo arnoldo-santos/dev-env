@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# jproj
+# Create a minimal plain Java project with src/ and test/
+# Includes automatic Java version detection
+
+set -e
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <project-directory>"
+    exit 1
+fi
+
+PROJECT_DIR="$1"
+
+# --- Detect Java version ---
+if command -v java >/dev/null 2>&1; then
+    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+else
+    JAVA_VERSION="unknown"
+fi
+
+# --- Create structure ---
+mkdir -p "$PROJECT_DIR"/{src,test,out}
+cd "$PROJECT_DIR"
+
+# --- Create App.java with version comment ---
+cat >src/App.java <<EOF
+// Java version: ${JAVA_VERSION}
+public class App {
+    public static void main(String[] args) {
+        System.out.println("Hello, world!");
+    }
+}
+EOF
+
+# --- Create AppTest.java ---
+cat >test/AppTest.java <<'EOF'
+public class AppTest {
+    public static void main(String[] args) {
+        System.out.println("Running tests...");
+        assert 1 + 1 == 2 : "Math is broken!";
+        System.out.println("✅ All tests passed!");
+    }
+}
+EOF
+
+# --- Create helper build script ---
+cat >build.sh <<'EOF'
+#!/usr/bin/env bash
+set -e
+mkdir -p out
+javac src/*.java test/*.java -d out
+echo "✅ Build complete!"
+EOF
+chmod +x build.sh
+
+# --- Create helper run scripts ---
+cat >run.sh <<'EOF'
+#!/usr/bin/env bash
+set -e
+java -cp out App
+EOF
+chmod +x run.sh
+
+cat >runtests.sh <<'EOF'
+#!/usr/bin/env bash
+set -e
+java -cp out AppTest
+EOF
+chmod +x runtests.sh
+
+echo ""
+echo "✅ Minimal Java project created at: $PROJECT_DIR"
+echo ""
+echo "Java version detected: ${JAVA_VERSION}"
+echo ""
+echo "Structure:"
+echo "  src/        → your Java source files"
+echo "  test/       → your test files"
+echo "  out/        → compiled classes"
+echo ""
+echo "Use:"
+echo "  ./build.sh       # compile everything"
+echo "  ./run.sh         # run main program"
+echo "  ./runtests.sh    # run tests"

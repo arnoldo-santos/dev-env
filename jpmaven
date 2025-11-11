@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# jpmaven: create a Java project with Maven in a given directory
+
+set -e # Exit immediately if a command fails
+
+# --- Check args ---
+if [ -z "$1" ]; then
+    echo "Usage: $0 <project-directory>"
+    exit 1
+fi
+
+PROJECT_DIR="$1"
+PROJECT_NAME=$(basename "$PROJECT_DIR")
+GROUP_ID="com.example"
+ARTIFACT_ID="$PROJECT_NAME"
+PACKAGE="${GROUP_ID}.${ARTIFACT_ID}"
+
+# --- Check Maven ---
+if ! command -v mvn >/dev/null 2>&1; then
+    echo "Maven is not installed. Installing via Homebrew..."
+    brew install maven || {
+        echo "❌ Failed to install Maven. Please install manually."
+        exit 1
+    }
+fi
+
+# --- Create directory if missing ---
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
+
+# --- Generate project with Maven archetype ---
+echo "🚀 Creating Maven Java project in: $PROJECT_DIR ..."
+mvn archetype:generate \
+    -DgroupId="$GROUP_ID" \
+    -DartifactId="$ARTIFACT_ID" \
+    -DarchetypeArtifactId=maven-archetype-quickstart \
+    -DinteractiveMode=false >/dev/null
+
+cd "$ARTIFACT_ID"
+
+# --- Clean up and show success ---
+echo ""
+echo "✅ Java Maven project created successfully!"
+echo "📁 Directory: $(pwd)"
+echo ""
+echo "Next steps:"
+echo "  cd $(pwd)"
+echo "  mvn compile"
+echo "  mvn exec:java -Dexec.mainClass=\"${PACKAGE}.App\""

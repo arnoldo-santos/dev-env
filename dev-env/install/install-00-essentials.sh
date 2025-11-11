@@ -1,7 +1,6 @@
 #!/bin/bash
 # file: install-essentials.sh
 
-
 # root directory
 ROOT_DIR="$HOME/software/scripts"
 # import
@@ -72,6 +71,16 @@ function install_clipboard() {
     return "$OK"
 }
 
+function check_homebrew() {
+    # it is installed
+    if command -v brew >/dev/null 2>&1; then
+        return "$OK"
+    fi
+
+    # it isn't installed so install it
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
 function install_essentials() {
     echo "Installing essential software..."
 
@@ -112,6 +121,10 @@ function install_essentials() {
 
     say "Taplo..."
     npm install -g @taplo/cli || return "$ERROR"
+    say "done!"
+
+    say "Homebrew..."
+    check_homebrew
     say "done!"
 
     return "$OK"

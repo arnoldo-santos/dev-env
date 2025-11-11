@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# jpgradle: create a Java project with Gradle in a given directory
+
+# Exit if any command fails
+set -e
+
+# --- Check args ---
+if [ -z "$1" ]; then
+	echo "Usage: $0 <project-directory>"
+	exit 1
+fi
+
+PROJECT_DIR="$1"
+
+# --- Check if gradle is installed ---
+if ! command -v gradle >/dev/null 2>&1; then
+	echo "Gradle is not installed. Installing via Homebrew..."
+	brew install gradle || {
+		echo "Failed to install Gradle. Please install manually."
+		exit 1
+	}
+fi
+
+# --- Create directory if it doesn't exist ---
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
+
+# --- Initialize Gradle project ---
+echo "Initializing Gradle Java project in $PROJECT_DIR ..."
+gradle init --type java-application --dsl groovy --test-framework junit --project-name "$(basename "$PROJECT_DIR")" --package "com.example.$(basename "$PROJECT_DIR")"
+
+# --- Print result ---
+echo ""
+echo "✅ Java Gradle project created successfully!"
+echo "📁 Directory: $PROJECT_DIR"
+echo ""
+echo "Next steps:"
+echo "  cd $PROJECT_DIR"
+echo "  gradle build"
+echo "  gradle run"
