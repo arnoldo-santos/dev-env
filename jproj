@@ -45,29 +45,53 @@ public class AppTest {
 EOF
 
 # --- Create helper build script ---
-cat >build.sh <<'EOF'
+cat >build <<'EOF'
 #!/usr/bin/env bash
 set -e
 mkdir -p out
 javac src/*.java test/*.java -d out
 echo "✅ Build complete!"
 EOF
-chmod +x build.sh
+chmod +x build
 
 # --- Create helper run scripts ---
-cat >run.sh <<'EOF'
+cat >run <<'EOF'
 #!/usr/bin/env bash
 set -e
 java -cp out App
 EOF
-chmod +x run.sh
+chmod +x run
 
-cat >runtests.sh <<'EOF'
+cat >runtests <<'EOF'
 #!/usr/bin/env bash
 set -e
 java -cp out AppTest
 EOF
-chmod +x runtests.sh
+chmod +x runtests
+
+# --- Add minimal Eclipse metadata for Helix/JDT LS ---
+cat >.project <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+    <name>$(basename "$PROJECT_DIR")</name>
+    <comment></comment>
+    <projects/>
+    <buildSpec/>
+    <natures>
+        <nature>org.eclipse.jdt.core.javanature</nature>
+    </natures>
+</projectDescription>
+EOF
+
+cat >.classpath <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry kind="src" path="src"/>
+    <classpathentry kind="src" path="test"/>
+    <classpathentry kind="output" path="out"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+</classpath>
+EOF
 
 echo ""
 echo "✅ Minimal Java project created at: $PROJECT_DIR"
@@ -80,6 +104,6 @@ echo "  test/       → your test files"
 echo "  out/        → compiled classes"
 echo ""
 echo "Use:"
-echo "  ./build.sh       # compile everything"
-echo "  ./run.sh         # run main program"
-echo "  ./runtests.sh    # run tests"
+echo "  ./build       # compile everything"
+echo "  ./run         # run main program"
+echo "  ./runtests    # run tests"

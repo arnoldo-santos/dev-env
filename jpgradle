@@ -27,7 +27,8 @@ cd "$PROJECT_DIR"
 
 # --- Initialize Gradle project ---
 echo "Initializing Gradle Java project in $PROJECT_DIR ..."
-gradle init --type java-application --dsl groovy --test-framework junit --project-name "$(basename "$PROJECT_DIR")" --package "com.example.$(basename "$PROJECT_DIR")"
+gradle init --type java-application --dsl kotlin --project-name "$(basename "$PROJECT_DIR")" --package "$(basename "$PROJECT_DIR")" --test-framework junit
+# gradle init --type java-application --dsl groovy --test-framework junit --project-name "$(basename "$PROJECT_DIR")" --package "com.example.$(basename "$PROJECT_DIR")"
 
 # --- Print result ---
 echo ""
