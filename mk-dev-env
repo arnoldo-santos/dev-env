@@ -32,7 +32,7 @@ function make_dev_env() {
 
 function run() {
     check_internet_connection || exit "$ERROR"
-    make_dev_env && sudo reboot
+    make_dev_env #&& sudo reboot
 }
 
 run
