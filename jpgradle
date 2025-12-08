@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# jpgradle — truly unbreakable edition (December 2025+)
-# Now with perfect ./run ./build ./test wrappers → zero Gradle noise ever again
+# file = jpgradle
 
 set -euo pipefail
 
-die() {
+function die() {
     echo "Error: $*" >&2
     exit 1
 }
@@ -15,7 +14,7 @@ PROJECT_DIR="$1"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
 
 # ── Ensure jq (Debian/Ubuntu only) ─────────────────────────────────────
-ensure_jq() {
+function ensure_jq() {
     if command -v jq >/dev/null 2>&1; then
         echo "jq already installed"
         return 0
@@ -66,10 +65,6 @@ echo "JUnit Jupiter version → $JUNIT_VERSION"
 # ── Create project ───────────────────────────────────────────────────
 mkdir -p "$PROJECT_DIR"
 cd "$PROJECT_DIR"
-
-# gradle init --type basic --dsl kotlin --project-name "$PROJECT_NAME" >/dev/null <<EOF
-# y
-# EOF
 
 # default DSL = --dsl groovy
 gradle init --type basic --project-name "$PROJECT_NAME" >/dev/null <<EOF
@@ -154,9 +149,7 @@ EOF
 gradle wrapper --gradle-version "$GRADLE_VERSION" --distribution-type bin >/dev/null
 chmod +x gradlew 2>/dev/null || true
 
-# # ── Create beautiful helper scripts (bulletproof: auto-remove build/ dir) ──
-# rm -rf build/ 2>/dev/null || true # Safe: removes Gradle's build/ dir if it exists
-
+# # ── helper scripts──
 cat >run <<'EOF'
 #!/usr/bin/env bash
 # Clean & silent run – no Gradle progress bar ever
@@ -182,15 +175,15 @@ chmod +x run compile check
 
 # ── Final message ─────────────────────────────────────────────────────
 echo ""
-echo "Perfect project created: $PROJECT_NAME"
+echo "Project created: $PROJECT_NAME"
 echo "   Java $JAVA_MAJOR  •  Gradle $GRADLE_VERSION  •  JUnit $JUNIT_VERSION"
 echo ""
 echo "   cd \"$PROJECT_DIR\""
 echo ""
 echo "   Useful commands:"
 echo "     ./run        → super clean run (no Gradle noise)"
-echo "     ./compile      → normal build with full output"
-echo "     ./check       → clean test run"
+echo "     ./compile    → normal build with full output"
+echo "     ./check      → clean test run"
 echo "     ./gradlew …  → if you ever need the raw thing"
 echo ""
-echo "You now have the cleanest Java dev experience in 2025. Enjoy!"
+echo "Enjoy!"
