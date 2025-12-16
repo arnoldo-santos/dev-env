@@ -66,7 +66,7 @@ echo "JUnit Jupiter version → $JUNIT_VERSION"
 mkdir -p "$PROJECT_DIR"
 cd "$PROJECT_DIR"
 
-# default DSL = --dsl groovy
+# DSL = --dsl groovy | --dsl kotlin
 gradle init --type basic --project-name "$PROJECT_NAME" >/dev/null <<EOF
 y
 EOF
@@ -131,7 +131,7 @@ mkdir -p src test
 cat >src/Main.java <<'EOF'
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello from <%= projectName %>!");
+        System.out.println("Sape!");
     }
 }
 EOF
