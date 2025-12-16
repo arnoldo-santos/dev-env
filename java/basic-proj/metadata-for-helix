@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# --- Add minimal Eclipse metadata for Helix/JDT LS ---
+cat >.project <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+    <name>$(basename "$PROJECT_DIR")</name>
+    <comment></comment>
+    <projects/>
+    <buildSpec/>
+    <natures>
+        <nature>org.eclipse.jdt.core.javanature</nature>
+    </natures>
+</projectDescription>
+EOF
+
+cat >.classpath <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry kind="src" path="src"/>
+    <classpathentry kind="src" path="test"/>
+    <classpathentry kind="output" path="bin"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+</classpath>
+EOF

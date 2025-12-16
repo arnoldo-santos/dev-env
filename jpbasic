@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# jproj
+# Create a minimal plain Java project with src/ and test/
+# Includes automatic Java version detection
+
+set -e
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <project-directory>"
+    exit 1
+fi
+
+PROJECT_DIR="$1"
+
+# --- Detect Java version ---
+if command -v java >/dev/null 2>&1; then
+    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+else
+    JAVA_VERSION="unknown"
+fi
+
+# --- create project structure ---
+mkdir -p "$PROJECT_DIR"/{src,test,bin} || {
+    echo "ERROR: project structure creation failed: $PROJECT_DIR/{src,test,bin}" >&2
+    exit 1
+}
+cd "$PROJECT_DIR"
+
+# --- Main class ---
+cat >src/Run.java <<EOF
+// Java version: ${JAVA_VERSION}
+public class Run {
+    public static void main(String[] args) {
+        System.out.println("Hello, world!");
+    }
+}
+EOF
+
+# --- Test class ---
+cat >test/Test.java <<'EOF'
+public class Test {
+    public static void main(String[] args) {
+        System.out.println("Running tests...");
+        assert 1 + 1 == 2 : "Math is broken!";
+        System.out.println("✅ All tests passed!");
+    }
+}
+EOF
+
+# --- helper scripts ---
+# compile: build the project
+cat >compile <<'EOF'
+#!/usr/bin/env bash
+set -e
+javac src/*.java test/*.java -d bin
+echo "✅ Build complete!"
+EOF
+chmod +x compile
+
+# run: execute the main code
+cat >run <<'EOF'
+#!/usr/bin/env bash
+set -e
+java -cp bin Run
+EOF
+chmod +x run
+
+# check: tests your tests
+cat >check <<'EOF'
+#!/usr/bin/env bash
+set -e
+java -cp bin Test
+EOF
+chmod +x check
+
+echo ""
+echo "✅ Minimal Java project created at: $PROJECT_DIR"
+echo ""
+echo "Java version detected: ${JAVA_VERSION}"
+echo ""
+echo "Structure:"
+echo "  src/        → your Java source files"
+echo "  test/       → your test files"
+echo "  bin/        → compiled classes"
+echo ""
+echo "Use:"
+echo "  ./compile     # compile everything"
+echo "  ./run         # run main program"
+echo "  ./check       # run tests"
