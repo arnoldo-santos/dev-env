@@ -52,7 +52,8 @@ EOF
 cat >compile <<'EOF'
 #!/usr/bin/env bash
 set -e
-javac src/*.java test/*.java -d bin
+#javac src/*.java test/*.java -d bin
+javac -d bin $(find src test -name "*.java" 2>/dev/null)
 echo "✅ Build complete!"
 EOF
 chmod +x compile
