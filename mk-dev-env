@@ -18,6 +18,61 @@ function check_internet_connection() {
     return "$ERROR"
 }
 
+function reboot_with_countdown() {
+    echo "Reboot system automatically in 30 seconds"
+    echo "Type:"
+    echo "• 'yes' | 'y' → reboot immediately"
+    echo "• 'no' | 'n' | 'q' | 'quit' | 'c' | 'cancel' → cancel reboot"
+    echo "• Invalid or empty input → countdown continues"
+    echo
+
+    local total_seconds=30
+    local start_time=$(date +%s)
+
+    # Enable reading single characters without Enter (except when user presses Enter to submit)
+    # We use a background process to handle the countdown display
+    while true; do
+        local current_time=$(date +%s)
+        local elapsed=$((current_time - start_time))
+        local remaining=$((total_seconds - elapsed))
+
+        if [[ $remaining -le 0 ]]; then
+            echo -e "\n\nTime's up!"
+            echo "Rebooting..."
+            sudo reboot
+            return 0
+        fi
+
+        # Print countdown on the same line
+        printf "\rReboot now? (y/n/q) [%02d seconds left]: " "$remaining"
+
+        # Try to read input with a 1-second timeout
+        if read -t 1 -r answer; then
+            # User pressed Enter — process the full answer
+            echo                                                                # Move to new line after the countdown line
+            answer_lower=$(echo "$answer" | tr '[:upper:]' '[:lower:]' | xargs) # trim whitespace
+
+            if [[ "$answer_lower" == "yes" || "$answer_lower" == "y" ]]; then
+                echo "Rebooting..."
+                sudo reboot
+                return 0
+
+            elif [[ "$answer_lower" == "no" || "$answer_lower" == "n" ||
+                "$answer_lower" == "q" || "$answer_lower" == "quit" ||
+                "$answer_lower" == "c" || "$answer_lower" == "cancel" ]]; then
+                echo "Reboot cancelled"
+                return 0
+
+            else
+                echo "Invalid input — ignored"
+                # Continue the loop immediately (don't wait the full second)
+                continue
+            fi
+        fi
+        # If no input, loop continues and updates the countdown every second
+    done
+}
+
 function make_dev_env() {
 
     # install essential software
@@ -32,7 +87,8 @@ function make_dev_env() {
 
 function run() {
     check_internet_connection || exit "$ERROR"
-    make_dev_env && sudo reboot
+    # make_dev_env && reboot_with_countdown
+    reboot_with_countdown
 }
 
 run
