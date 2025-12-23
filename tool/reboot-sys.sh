@@ -4,7 +4,7 @@
 # Configuration / Constants
 # ───────────────────────────────────────────────────────────────
 
-readonly COUNTDOWN_SECONDS=30
+readonly COUNTDOWN_SECONDS=60
 readonly REBOOT_CMD="sudo reboot"
 
 # Accepted answers (case insensitive)
@@ -15,44 +15,43 @@ readonly -A NO_ANSWERS=([no]=1 [n]=1 [q]=1 [quit]=1 [c]=1 [cancel]=1)
 # Helper functions
 # ───────────────────────────────────────────────────────────────
 
-print_instructions() {
+function print_instructions() {
 	cat <<-'EOF'
-		Reboot system automatically in 30 seconds
+		Reboot system automatically in 60 seconds
 
 		Type:
-		  • 'yes' | 'y'        → reboot immediately
-		  • 'no' | 'n' | 'q' | 'quit' | 'c' | 'cancel' → cancel reboot
-		  • Invalid or empty   → countdown continues
+		  • y (yes)                        →   reboot immediately
+		  • n (no) | q (quit) | c (cancel) →   cancel reboot
 	EOF
 	echo
 }
 
-normalize_input() {
+function normalize_input() {
 	local input="$1"
 	# Remove leading/trailing whitespace and convert to lowercase
 	echo "$input" | tr '[:upper:]' '[:lower:]' | xargs
 }
 
-is_yes() {
+function is_yes() {
 	local answer="$1"
 	[[ ${YES_ANSWERS[$answer]+_} ]]
 }
 
-is_no() {
+function is_no() {
 	local answer="$1"
 	[[ ${NO_ANSWERS[$answer]+_} ]]
 }
 
-print_countdown() {
+function print_countdown() {
 	local remaining=$1
-	printf "\rReboot now? (y/n/q) [%02d seconds left]: " "$remaining"
+	printf "\rReboot now? (y | n, q, c) [%02d seconds left]: " "$remaining"
 }
 
 # ───────────────────────────────────────────────────────────────
 # Main logic
 # ───────────────────────────────────────────────────────────────
 
-countdown_reboot() {
+function countdown_reboot() {
 	local total_seconds=$1
 	local start_time
 	start_time=$(date +%s)
@@ -101,7 +100,7 @@ countdown_reboot() {
 # Public entry point
 # ───────────────────────────────────────────────────────────────
 
-reboot_with_countdown() {
+function reboot_with_countdown() {
 	print_instructions
 	countdown_reboot "$COUNTDOWN_SECONDS"
 }
