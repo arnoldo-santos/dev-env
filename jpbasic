@@ -20,8 +20,8 @@ else
 fi
 
 # --- create project structure ---
-mkdir -p "$PROJECT_DIR"/{src,test,bin} || {
-    echo "ERROR: project structure creation failed: $PROJECT_DIR/{src,test,bin}" >&2
+mkdir -p "$PROJECT_DIR"/{src,test,out} || {
+    echo "ERROR: project structure creation failed: $PROJECT_DIR/{src,test,out}" >&2
     exit 1
 }
 cd "$PROJECT_DIR"
@@ -48,21 +48,53 @@ public class Test {
 EOF
 
 # --- helper scripts ---
-# compile: build the project
-cat >compile <<'EOF'
+# build: compile the project
+cat >build <<'EOF'
 #!/usr/bin/env bash
 set -e
-#javac src/*.java test/*.java -d bin
-javac -d bin $(find src test -name "*.java" 2>/dev/null)
+javac -d out $(find src test -name "*.java" 2>/dev/null)
 echo "✅ Build complete!"
 EOF
-chmod +x compile
+chmod +x build
+
+# rebuild: clean + full rebuild
+cat >rebuild <<'EOF'
+#!/usr/bin/env bash
+# Removes all .class files and recompiles everything
+
+set -euo pipefail
+
+OUT_DIR="out"
+SRC_DIR="src"
+
+echo "Cleaning out/ ..."
+rm -rf "$OUT_DIR"/*.class 2>/dev/null || true
+rm -rf "$OUT_DIR"/*/*.class 2>/dev/null || true # in case of subdirs (rare)
+mkdir -p "$OUT_DIR"
+
+echo ""
+echo "Recompiling all .java files in src/ → out/ ..."
+javac -d out $(find src test -name "*.java" 2>/dev/null)
+
+if [[ $? -eq 0 ]]; then
+    echo ""
+	echo "✅ Rebuild complete!"
+	echo "Classes in out/:"
+	ls -l out/*.class 2>/dev/null || echo "(no .class files found — check for compile errors)"
+else
+	echo "Compilation failed — see errors above"
+fi
+
+echo ""
+echo "done"
+EOF
+chmod +x rebuild
 
 # run: execute the main code
 cat >run <<'EOF'
 #!/usr/bin/env bash
 set -e
-java -cp bin Run
+java -cp out Run
 EOF
 chmod +x run
 
@@ -70,7 +102,7 @@ chmod +x run
 cat >check <<'EOF'
 #!/usr/bin/env bash
 set -e
-java -cp bin Test
+java -cp out Test
 EOF
 chmod +x check
 
@@ -82,9 +114,11 @@ echo ""
 echo "Structure:"
 echo "  src/        → your Java source files"
 echo "  test/       → your test files"
-echo "  bin/        → compiled classes"
+echo "  out/        → compiled classes"
 echo ""
 echo "Use:"
-echo "  ./compile     # compile everything"
+echo "  ./build       # compile everything"
 echo "  ./run         # run main program"
 echo "  ./check       # run tests"
+echo "  ./rebuild     # clean out/ and recompile everything"
+echo ""
