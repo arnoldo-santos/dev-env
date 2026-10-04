@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+CACHE_DIR="/var/cache/apt"
+
+# Ensure the script is run as root.
+# if [[ $EUID -ne 0 ]]; then
+#     echo "Error: This script must be run as root."
+#     echo "Usage: sudo $0"
+#     exit 1
+# fi
+
+# Ensure the cache directory exists.
+if [[ ! -d "$CACHE_DIR" ]]; then
+    echo "Error: '$CACHE_DIR' does not exist."
+    exit 1
+fi
+
+before=$(sudo du -sb "$CACHE_DIR" | awk '{print $1}')
+before_human=$(sudo du -sh "$CACHE_DIR" | cut -f1)
+
+echo "APT cache size before cleaning: $before_human"
+
+# Clean the cache.
+if command -v nala >/dev/null 2>&1; then
+    echo "Cleaning cache using nala..."
+    sudo nala clean
+else
+    echo "Cleaning cache using apt..."
+    sudo apt clean
+fi
+
+after=$(sudo du -sb "$CACHE_DIR" | awk '{print $1}')
+after_human=$(sudo du -sh "$CACHE_DIR" | cut -f1)
+
+freed=$((before - after))
+freed_human=$(sudo numfmt --to=iec-i --suffix=B "$freed")
+
+echo
+echo "APT cache size after cleaning : $after_human"
+echo "Disk space reclaimed          : $freed_human"
